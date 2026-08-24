@@ -1,0 +1,13 @@
+# Python & venv
+venv/
+__pycache__/
+*.pyc
+waydroid_script/
+waydroid_script/venv/
+waydroid_script/__pycache__/
+
+# Large downloaded APKs (can be downloaded via script)
+*.apk
+
+# System / logs
+*.log
