@@ -3,14 +3,17 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RUNNER_PATH="${SCRIPT_DIR}/run_waydroid.sh"
+GUI_PATH="${SCRIPT_DIR}/waydroid_gui.py"
 DESKTOP_DIR="$(xdg-user-dir DESKTOP 2>/dev/null || echo "${HOME}/Desktop")"
 [ ! -d "$DESKTOP_DIR" ] && [ -d "${HOME}/바탕화면" ] && DESKTOP_DIR="${HOME}/바탕화면"
 
-# 1. 런처 스크립트 실행 권한 확인
-chmod +x "$RUNNER_PATH"
+# 1. 실행 권한 부여
+chmod +x "$RUNNER_PATH" "$GUI_PATH"
 
-# 2. .desktop 내용 생성
-DESKTOP_CONTENT="[Desktop Entry]
+mkdir -p "${HOME}/.local/share/applications"
+
+# 2. Waydroid 메인 실행 바로가기
+MAIN_DESKTOP="[Desktop Entry]
 Name=Waydroid (Android)
 Comment=Launch Waydroid Android Environment
 Exec=${RUNNER_PATH}
@@ -20,21 +23,34 @@ Type=Application
 Categories=Utility;Application;
 StartupNotify=true"
 
-# 3. 애플리케이션 메뉴(~/.local/share/applications/)에 등록
-mkdir -p "${HOME}/.local/share/applications"
-echo "$DESKTOP_CONTENT" > "${HOME}/.local/share/applications/waydroid-weston.desktop"
+echo "$MAIN_DESKTOP" > "${HOME}/.local/share/applications/waydroid-weston.desktop"
 chmod +x "${HOME}/.local/share/applications/waydroid-weston.desktop"
 
-# 4. 바탕화면에 바로가기 아이콘 생성
+# 3. Waydroid 설정 매니저(GUI) 바로가기
+SETTINGS_DESKTOP="[Desktop Entry]
+Name=Waydroid Settings Manager
+Comment=Configure Waydroid Resolution, Keyboard, and Network
+Exec=python3 ${GUI_PATH}
+Icon=preferences-system
+Terminal=false
+Type=Application
+Categories=Settings;Utility;
+StartupNotify=true"
+
+echo "$SETTINGS_DESKTOP" > "${HOME}/.local/share/applications/waydroid-settings.desktop"
+chmod +x "${HOME}/.local/share/applications/waydroid-settings.desktop"
+
+# 4. 바탕화면에 바로가기 생성
 if [ -d "$DESKTOP_DIR" ]; then
-    SHORTCUT_PATH="${DESKTOP_DIR}/Waydroid.desktop"
-    echo "$DESKTOP_CONTENT" > "$SHORTCUT_PATH"
-    chmod +x "$SHORTCUT_PATH"
-    # Linux Mint / GNOME / Cinnamon 신뢰 플래그 설정 (gio 명령어가 있을 경우)
+    echo "$MAIN_DESKTOP" > "${DESKTOP_DIR}/Waydroid.desktop"
+    echo "$SETTINGS_DESKTOP" > "${DESKTOP_DIR}/Waydroid-Settings.desktop"
+    chmod +x "${DESKTOP_DIR}/Waydroid.desktop" "${DESKTOP_DIR}/Waydroid-Settings.desktop"
+    
     if command -v gio &> /dev/null; then
-        gio set "$SHORTCUT_PATH" metadata::trusted true 2>/dev/null || true
+        gio set "${DESKTOP_DIR}/Waydroid.desktop" metadata::trusted true 2>/dev/null || true
+        gio set "${DESKTOP_DIR}/Waydroid-Settings.desktop" metadata::trusted true 2>/dev/null || true
     fi
-    echo "✅ 바탕화면 바로가기 생성 완료: ${SHORTCUT_PATH}"
+    echo "✅ 바탕화면 바로가기 생성 완료: ${DESKTOP_DIR}"
 fi
 
-echo "✅ 시작 메뉴 바로가기 생성 완료: ${HOME}/.local/share/applications/waydroid-weston.desktop"
+echo "✅ 시작 메뉴 바로가기 등록 완료"

@@ -14,9 +14,9 @@ echo "=========================================================="
 
 # 1. 필수 시스템 패키지 설치
 echo ""
-echo "📦 [1/7] 필수 패키지 및 Weston 설치 중..."
+echo "📦 [1/7] 필수 패키지, GUI 라이브러리 및 Weston 설치 중..."
 sudo apt update
-sudo apt install -y curl ca-certificates lxc weston python3 python3-venv git iptables
+sudo apt install -y curl ca-certificates lxc weston python3 python3-venv python3-tk git iptables
 
 # 2. Waydroid 공식 저장소 추가 및 설치
 echo ""
@@ -96,14 +96,15 @@ fi
 chmod +x "${SCRIPT_DIR}/create_desktop_shortcut.sh"
 chmod +x "${SCRIPT_DIR}/run_waydroid.sh"
 chmod +x "${SCRIPT_DIR}/install_apk.sh"
+chmod +x "${SCRIPT_DIR}/waydroid_gui.py"
+chmod +x "${SCRIPT_DIR}/uninstall.sh"
 "${SCRIPT_DIR}/create_desktop_shortcut.sh"
 
 echo ""
 echo "=========================================================="
 echo " 🎉 모든 설치 및 최적화가 완료되었습니다!"
 echo "=========================================================="
-echo "1. 바탕화면의 [Waydroid (Android)] 아이콘을 더블 클릭하여 실행하세요."
-echo "2. 처음 실행 시 안드로이드가 켜진 상태에서 아래 명령어로 스토어를 설치할 수 있습니다:"
-echo "   ./install_apk.sh"
-echo "3. Aurora Store에서 필요한 앱 및 Gboard(한글 키보드)를 설치하시면 됩니다."
+echo "1. [Waydroid Settings Manager] 바로가기로 해상도 및 키보드를 간편하게 설정할 수 있습니다."
+echo "2. [Waydroid (Android)] 바로가기로 안드로이드 환경을 바로 실행할 수 있습니다."
+echo "3. Aurora Store에서 원하는 앱 및 Gboard를 설치하시면 됩니다."
 echo "=========================================================="
