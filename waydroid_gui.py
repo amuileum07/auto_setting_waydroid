@@ -23,6 +23,7 @@ DEFAULT_CONFIG = {
     "height": 1200,
     "dpi": 280,
     "share_downloads": True,
+    "shared_folder_path": os.path.expanduser("~/Downloads"),
     "custom_width": 1080,
     "custom_height": 1920,
 }
@@ -50,9 +51,12 @@ TRANSLATIONS = {
         "btn_enable_gboard": "Set Gboard as Default Keyboard",
         "btn_open_ime_settings": "Open Android Keyboard Settings",
         "shortcut_tip": "💡 Tip: Use Shift + Space or Hangul key to toggle languages on physical keyboard.",
-        "storage_section": "Host File Sharing:",
-        "share_downloads_label": "Share ~/Downloads folder with Android (/sdcard/Download)",
-        "btn_open_downloads": "Open Downloads Folder",
+        "storage_section": "Folder Sharing Options:",
+        "storage_desc": "Select whether to share a host computer folder with Android (/sdcard/Download).",
+        "share_downloads_label": "Enable Host ↔ Android Folder Sharing",
+        "shared_folder_label": "Host Folder to Share:",
+        "btn_browse": "Browse...",
+        "btn_open_downloads": "Open Selected Folder in File Manager",
         "network_section": "Network & Maintenance:",
         "btn_fix_network": "🛡️ Fix UFW Firewall & Network",
         "btn_install_apk": "📦 Install APK File...",
@@ -87,9 +91,12 @@ TRANSLATIONS = {
         "btn_enable_gboard": "Gboard를 기본 키보드로 활성화",
         "btn_open_ime_settings": "안드로이드 언어/키보드 설정 열기",
         "shortcut_tip": "💡 팁: 노트북 물리 키보드로 입력 시 [Shift + Space] 또는 [한/영] 키로 전환됩니다.",
-        "storage_section": "파일 공유 설정:",
-        "share_downloads_label": "리눅스 ~/Downloads 폴더를 안드로이드와 자동 공유",
-        "btn_open_downloads": "다운로드 폴더 열기",
+        "storage_section": "다운로드/폴더 공유 설정:",
+        "storage_desc": "리눅스 PC의 폴더를 안드로이드의 Download 폴더(/sdcard/Download)와 공유할지 선택합니다.",
+        "share_downloads_label": "호스트 ↔ 안드로이드 폴더 공유 활성화",
+        "shared_folder_label": "공유할 호스트 폴더 경로:",
+        "btn_browse": "폴더 찾기...",
+        "btn_open_downloads": "선택된 폴더 열기",
         "network_section": "네트워크 및 유지관리:",
         "btn_fix_network": "🛡️ 방화벽(UFW) 및 인터넷 차단 해결",
         "btn_install_apk": "📦 APK 파일 직접 설치...",
@@ -124,9 +131,12 @@ TRANSLATIONS = {
         "btn_enable_gboard": "Gboardをデフォルトに設定",
         "btn_open_ime_settings": "Androidキーボード設定を開く",
         "shortcut_tip": "💡 ヒント: 物理キーボードで Shift + Space を押して言語を切り替えます。",
-        "storage_section": "ホストファイル共有:",
-        "share_downloads_label": "~/Downloads フォルダを共有 (/sdcard/Download)",
-        "btn_open_downloads": "ダウンロードフォルダを開く",
+        "storage_section": "フォルダ共有オプション:",
+        "storage_desc": "ホストPCのフォルダをAndroid (/sdcard/Download) と共有するか選択します。",
+        "share_downloads_label": "ホスト ↔ Android フォルダ共有を有効化",
+        "shared_folder_label": "共有するホストフォルダ:",
+        "btn_browse": "参照...",
+        "btn_open_downloads": "選択したフォルダを開く",
         "network_section": "ネットワークとメンテナンス:",
         "btn_fix_network": "🛡️ UFWファイアウォール & ネット修復",
         "btn_install_apk": "📦 APKファイルをインストール...",
@@ -161,9 +171,12 @@ TRANSLATIONS = {
         "btn_enable_gboard": "将Gboard设为默认输入法",
         "btn_open_ime_settings": "打开Android输入法设置",
         "shortcut_tip": "💡 提示: 在实体键盘上按 Shift + Space 切换输入语言。",
-        "storage_section": "文件共享设置:",
-        "share_downloads_label": "共享 ~/Downloads 文件夹 (/sdcard/Download)",
-        "btn_open_downloads": "打开下载文件夹",
+        "storage_section": "文件夹共享选项:",
+        "storage_desc": "选择是否与 Android (/sdcard/Download) 共享主机电脑文件夹。",
+        "share_downloads_label": "启用 主机 ↔ Android 文件夹共享",
+        "shared_folder_label": "共享的主机文件夹路径:",
+        "btn_browse": "浏览...",
+        "btn_open_downloads": "打开所选文件夹",
         "network_section": "网络与维护:",
         "btn_fix_network": "🛡️ 修复UFW防火墙与网络",
         "btn_install_apk": "📦 安装APK文件...",
@@ -198,9 +211,12 @@ TRANSLATIONS = {
         "btn_enable_gboard": "Establecer Gboard por Defecto",
         "btn_open_ime_settings": "Abrir Ajustes de Teclado Android",
         "shortcut_tip": "💡 Consejo: Usa Shift + Space para cambiar de idioma en teclado físico.",
-        "storage_section": "Archivos Compartidos:",
-        "share_downloads_label": "Compartir carpeta ~/Downloads (/sdcard/Download)",
-        "btn_open_downloads": "Abrir Descargas",
+        "storage_section": "Opciones de Compartir:",
+        "storage_desc": "Selecciona si deseas compartir una carpeta del host con Android (/sdcard/Download).",
+        "share_downloads_label": "Habilitar carpeta compartida Host ↔ Android",
+        "shared_folder_label": "Carpeta del host a compartir:",
+        "btn_browse": "Examinar...",
+        "btn_open_downloads": "Abrir Carpeta Seleccionada",
         "network_section": "Red y Mantenimiento:",
         "btn_fix_network": "🛡️ Reparar Cortafuegos UFW",
         "btn_install_apk": "📦 Instalar archivo APK...",
@@ -235,9 +251,12 @@ TRANSLATIONS = {
         "btn_enable_gboard": "Gboard als Standard festlegen",
         "btn_open_ime_settings": "Android-Tastatureinstellungen öffnen",
         "shortcut_tip": "💡 Tipp: Mit Umschalt + Leertaste zwischen Sprachen wechseln.",
-        "storage_section": "Dateifreigabe:",
-        "share_downloads_label": "~/Downloads mit Android teilen (/sdcard/Download)",
-        "btn_open_downloads": "Downloads öffnen",
+        "storage_section": "Ordnerfreigabe-Optionen:",
+        "storage_desc": "Wählen Sie, ob ein Host-Ordner für Android (/sdcard/Download) freigegeben werden soll.",
+        "share_downloads_label": "Host ↔ Android Ordnerfreigabe aktivieren",
+        "shared_folder_label": "Freizugebender Host-Ordner:",
+        "btn_browse": "Durchsuchen...",
+        "btn_open_downloads": "Ausgewählten Ordner öffnen",
         "network_section": "Netzwerk & Wartung:",
         "btn_fix_network": "🛡️ UFW-Firewall & Netzwerk reparieren",
         "btn_install_apk": "📦 APK-Datei installieren...",
@@ -272,9 +291,12 @@ TRANSLATIONS = {
         "btn_enable_gboard": "Définir Gboard par défaut",
         "btn_open_ime_settings": "Ouvrir paramètres clavier Android",
         "shortcut_tip": "💡 Astuce: Utilisez Shift + Espace pour changer de langue.",
-        "storage_section": "Partage de fichiers:",
-        "share_downloads_label": "Partager ~/Downloads (/sdcard/Download)",
-        "btn_open_downloads": "Ouvrir Téléchargements",
+        "storage_section": "Options de Partage de Dossier:",
+        "storage_desc": "Choisissez si vous souhaitez partager un dossier hôte avec Android (/sdcard/Download).",
+        "share_downloads_label": "Activer le partage de dossier Hôte ↔ Android",
+        "shared_folder_label": "Dossier hôte à partager :",
+        "btn_browse": "Parcourir...",
+        "btn_open_downloads": "Ouvrir le dossier sélectionné",
         "network_section": "Réseau & Maintenance:",
         "btn_fix_network": "🛡️ Réparer pare-feu UFW",
         "btn_install_apk": "📦 Installer un fichier APK...",
@@ -309,9 +331,12 @@ TRANSLATIONS = {
         "btn_enable_gboard": "Imposta Gboard come Predefinito",
         "btn_open_ime_settings": "Apri Impostazioni Tastiera Android",
         "shortcut_tip": "💡 Suggerimento: Usa Shift + Spazio per cambiare lingua sulla tastiera fisica.",
-        "storage_section": "Condivisione File:",
-        "share_downloads_label": "Condividi cartella ~/Downloads (/sdcard/Download)",
-        "btn_open_downloads": "Apri Download",
+        "storage_section": "Opzioni di Condivisione Cartelle:",
+        "storage_desc": "Seleziona se condividere una cartella del computer host con Android (/sdcard/Download).",
+        "share_downloads_label": "Abilita condivisione cartella Host ↔ Android",
+        "shared_folder_label": "Cartella host da condividere:",
+        "btn_browse": "Sfoglia...",
+        "btn_open_downloads": "Apri Cartella Selezionata",
         "network_section": "Rete e Manutenzione:",
         "btn_fix_network": "🛡️ Ripara Firewall UFW & Rete",
         "btn_install_apk": "📦 Installa file APK...",
@@ -345,10 +370,9 @@ class WaydroidManagerApp(tk.Tk):
         self.current_lang = self.config_data.get("language", "en")
         
         self.title("Waydroid Settings Manager")
-        self.geometry("640x560")
-        self.minsize(560, 500)
+        self.geometry("640x580")
+        self.minsize(560, 520)
         
-        # Configure styles
         self.style = ttk.Style()
         self.style.theme_use("clam")
         
@@ -487,14 +511,40 @@ class WaydroidManagerApp(tk.Tk):
 
     def setup_storage_tab(self):
         self.lbl_storage_sec = ttk.Label(self.tab_storage, text=self.tr("storage_section"), font=("Arial", 10, "bold"))
-        self.lbl_storage_sec.pack(anchor="w", pady=(0, 6))
+        self.lbl_storage_sec.pack(anchor="w", pady=(0, 4))
+        
+        self.lbl_storage_desc = ttk.Label(self.tab_storage, text=self.tr("storage_desc"), wraplength=560)
+        self.lbl_storage_desc.pack(anchor="w", pady=(0, 10))
         
         self.share_var = tk.BooleanVar(value=self.config_data.get("share_downloads", True))
-        self.cb_share = ttk.Checkbutton(self.tab_storage, text=self.tr("share_downloads_label"), variable=self.share_var, command=self.on_share_change)
-        self.cb_share.pack(anchor="w", pady=8)
+        self.cb_share = ttk.Checkbutton(
+            self.tab_storage,
+            text=self.tr("share_downloads_label"),
+            variable=self.share_var,
+            command=self.on_share_toggle
+        )
+        self.cb_share.pack(anchor="w", pady=6)
+        
+        # Folder Path Selector Frame
+        self.folder_frame = ttk.LabelFrame(self.tab_storage, text="Shared Folder Location", padding=10)
+        self.folder_frame.pack(fill="x", pady=8)
+        
+        self.lbl_folder_path = ttk.Label(self.folder_frame, text=self.tr("shared_folder_label"))
+        self.lbl_folder_path.pack(anchor="w", pady=(0, 4))
+        
+        path_row = ttk.Frame(self.folder_frame)
+        path_row.pack(fill="x", pady=2)
+        
+        self.ent_folder = ttk.Entry(path_row)
+        current_path = self.config_data.get("shared_folder_path", os.path.expanduser("~/Downloads"))
+        self.ent_folder.insert(0, current_path)
+        self.ent_folder.pack(side="left", fill="x", expand=True, padx=(0, 6))
+        
+        self.btn_browse = ttk.Button(path_row, text=self.tr("btn_browse"), command=self.browse_folder)
+        self.btn_browse.pack(side="right")
         
         self.btn_open_dl = ttk.Button(self.tab_storage, text=self.tr("btn_open_downloads"), command=self.open_downloads)
-        self.btn_open_dl.pack(anchor="w", pady=4)
+        self.btn_open_dl.pack(anchor="w", pady=10)
 
     def setup_network_tab(self):
         self.lbl_net_sec = ttk.Label(self.tab_network, text=self.tr("network_section"), font=("Arial", 10, "bold"))
@@ -545,7 +595,10 @@ class WaydroidManagerApp(tk.Tk):
         
         # Storage tab
         self.lbl_storage_sec.config(text=self.tr("storage_section"))
+        self.lbl_storage_desc.config(text=self.tr("storage_desc"))
         self.cb_share.config(text=self.tr("share_downloads_label"))
+        self.lbl_folder_path.config(text=self.tr("shared_folder_label"))
+        self.btn_browse.config(text=self.tr("btn_browse"))
         self.btn_open_dl.config(text=self.tr("btn_open_downloads"))
         
         # Network tab
@@ -582,9 +635,18 @@ class WaydroidManagerApp(tk.Tk):
                 pass
         self.save_config()
 
-    def on_share_change(self):
+    def on_share_toggle(self):
         self.config_data["share_downloads"] = self.share_var.get()
+        self.config_data["shared_folder_path"] = self.ent_folder.get().strip()
         self.save_config()
+
+    def browse_folder(self):
+        folder = filedialog.askdirectory(title="Select Folder to Share with Android")
+        if folder:
+            self.ent_folder.delete(0, tk.END)
+            self.ent_folder.insert(0, folder)
+            self.config_data["shared_folder_path"] = folder
+            self.save_config()
 
     def check_status(self):
         try:
@@ -598,7 +660,6 @@ class WaydroidManagerApp(tk.Tk):
 
     def enable_gboard(self):
         try:
-            # Enable Gboard IME via waydroid shell
             subprocess.run([
                 "waydroid", "shell", "ime", "enable",
                 "com.google.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME"
@@ -618,9 +679,9 @@ class WaydroidManagerApp(tk.Tk):
             messagebox.showerror("Error", str(e))
 
     def open_downloads(self):
-        dl_path = os.path.expanduser("~/Downloads")
-        if os.path.exists(dl_path):
-            subprocess.Popen(["xdg-open", dl_path])
+        target_path = self.ent_folder.get().strip() or os.path.expanduser("~/Downloads")
+        if os.path.exists(target_path):
+            subprocess.Popen(["xdg-open", target_path])
 
     def fix_network(self):
         script = os.path.join(SCRIPT_DIR, "diagnose_and_fix_network.sh")
@@ -650,6 +711,7 @@ class WaydroidManagerApp(tk.Tk):
 
     def launch_waydroid(self):
         self.on_mode_change()
+        self.on_share_toggle()
         runner = os.path.join(SCRIPT_DIR, "run_waydroid.sh")
         subprocess.Popen([runner])
         self.after(3000, self.check_status)

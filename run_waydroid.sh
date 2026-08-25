@@ -25,6 +25,18 @@ if [ -f "$CONFIG_PATH" ]; then
     [ -n "$CFG_HEIGHT" ] && [ "$CFG_HEIGHT" -gt 0 ] && HEIGHT="$CFG_HEIGHT"
     [ "$CFG_MODE" = "fullscreen" ] && FULLSCREEN=true
     [ "$CFG_SHARE" = "False" ] && SHARE_DOWNLOADS=false
+    CFG_FOLDER=$(python3 -c "import json, os; d=json.load(open('$CONFIG_PATH')); print(os.path.expanduser(d.get('shared_folder_path', '~/Downloads')))" 2>/dev/null || echo "${HOME}/Downloads")
+fi
+
+# Apply Host -> Android Folder Sharing if enabled
+SHARED_SOURCE="${CFG_FOLDER:-${HOME}/Downloads}"
+ANDROID_DL="${HOME}/.local/share/waydroid/data/media/0/Download"
+
+if [ "$SHARE_DOWNLOADS" = "true" ] && [ -d "$SHARED_SOURCE" ]; then
+    mkdir -p "$ANDROID_DL"
+    if ! mountpoint -q "$ANDROID_DL" 2>/dev/null; then
+        sudo mount --bind "$SHARED_SOURCE" "$ANDROID_DL" 2>/dev/null || true
+    fi
 fi
 
 # Override with CLI arguments if passed
