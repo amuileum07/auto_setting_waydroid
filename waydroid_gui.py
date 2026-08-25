@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 Waydroid Settings Manager (GUI)
-Multi-language support (EN, KO, JA, ZH, ES, DE, FR, IT)
-Configures resolution, keyboard/Gboard, shared folders, network fixes, and session control.
+Clean UI with Multi-language support (EN, KO, JA, ZH, ES, DE, FR, IT)
+Optimized for Linux FreeType/Noto TrueType font rendering without broken emojis.
 """
 
 import os
@@ -10,6 +10,7 @@ import sys
 import json
 import subprocess
 import tkinter as tk
+import tkinter.font as tkfont
 from tkinter import ttk, messagebox, filedialog
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -28,61 +29,61 @@ DEFAULT_CONFIG = {
     "custom_height": 1920,
 }
 
-# Translations Dictionary (Order: EN, KO, JA, ZH, ES, DE, FR, IT)
+# Clean Translations Dictionary without broken Unicode emoji glyphs
 TRANSLATIONS = {
     "en": {
         "title": "Waydroid Settings Manager",
-        "lang_label": "🌐 Language:",
+        "lang_label": "Language:",
         "tab_display": "Display & Window",
         "tab_input": "Keyboard & Input",
         "tab_storage": "Storage & Sharing",
         "tab_network": "Network & Tools",
         "window_presets": "Window Size Presets:",
-        "preset_phone": "📱 Phone (600 x 1024)",
-        "preset_tablet_p": "📖 Tablet Portrait (800 x 1200)",
-        "preset_tablet_l": "💻 Tablet Landscape (1200 x 800)",
-        "preset_fullscreen": "🖥️ Fullscreen",
-        "preset_custom": "⚙️ Custom Resolution",
+        "preset_phone": "Phone Mode (600 x 1024)",
+        "preset_tablet_p": "Tablet Portrait Mode (800 x 1200)",
+        "preset_tablet_l": "Tablet Landscape Mode (1200 x 800)",
+        "preset_fullscreen": "Fullscreen Mode",
+        "preset_custom": "Custom Resolution",
         "width_label": "Width (px):",
         "height_label": "Height (px):",
         "dpi_label": "DPI Density:",
-        "gboard_section": "Gboard (Google Keyboard) Settings:",
-        "gboard_desc": "Gboard supports multilingual typing and physical keyboard switching.",
+        "gboard_section": "Gboard (Google Keyboard) Configuration:",
+        "gboard_desc": "Gboard provides smooth multilingual typing and physical keyboard language switching.",
         "btn_enable_gboard": "Set Gboard as Default Keyboard",
         "btn_open_ime_settings": "Open Android Keyboard Settings",
-        "shortcut_tip": "💡 Tip: Use Shift + Space or Hangul key to toggle languages on physical keyboard.",
-        "storage_section": "Folder Sharing Options:",
-        "storage_desc": "Select whether to share a host computer folder with Android (/sdcard/Download).",
-        "share_downloads_label": "Enable Host ↔ Android Folder Sharing",
-        "shared_folder_label": "Host Folder to Share:",
+        "shortcut_tip": "Shortcut: Press [Shift + Space] or [Hangul] key to toggle language on physical keyboard.",
+        "storage_section": "Host-Android Folder Sharing:",
+        "storage_desc": "Automatically share a local computer folder with Android Download storage (/sdcard/Download).",
+        "share_downloads_label": "Enable Folder Sharing with Android",
+        "shared_folder_label": "Local Folder to Share:",
         "btn_browse": "Browse...",
-        "btn_open_downloads": "Open Selected Folder in File Manager",
-        "network_section": "Network & Maintenance:",
-        "btn_fix_network": "🛡️ Fix UFW Firewall & Network",
-        "btn_install_apk": "📦 Install APK File...",
-        "btn_stop_session": "⏹ Stop Waydroid",
-        "btn_launch": "🚀 Launch Waydroid",
+        "btn_open_downloads": "Open Selected Folder",
+        "network_section": "Network Diagnostics & Maintenance:",
+        "btn_fix_network": "Fix UFW Firewall & Network",
+        "btn_install_apk": "Install APK File...",
+        "btn_stop_session": "Stop Waydroid",
+        "btn_launch": "Launch Waydroid",
         "status_running": "Status: Running",
         "status_stopped": "Status: Stopped",
-        "msg_saved": "Settings saved successfully!",
+        "msg_saved": "Settings saved successfully.",
         "msg_apk_success": "APK installed successfully!",
         "msg_apk_fail": "Failed to install APK.",
-        "msg_gboard_done": "Gboard enabled as default keyboard.",
+        "msg_gboard_done": "Gboard has been configured as the default keyboard.",
         "msg_net_fixed": "Network configuration script executed.",
     },
     "ko": {
         "title": "Waydroid 환경설정 매니저",
-        "lang_label": "🌐 언어 설정:",
+        "lang_label": "언어 설정:",
         "tab_display": "디스플레이 및 창",
         "tab_input": "키보드 및 입력",
         "tab_storage": "저장공간 및 공유",
         "tab_network": "네트워크 및 도구",
         "window_presets": "창 크기 프리셋:",
-        "preset_phone": "📱 스마트폰 모드 (600 x 1024)",
-        "preset_tablet_p": "📖 태블릿 세로 모드 (800 x 1200)",
-        "preset_tablet_l": "💻 태블릿 가로 모드 (1200 x 800)",
-        "preset_fullscreen": "🖥️ 전체화면",
-        "preset_custom": "⚙️ 사용자 지정 해상도",
+        "preset_phone": "스마트폰 모드 (600 x 1024)",
+        "preset_tablet_p": "태블릿 세로 모드 (800 x 1200)",
+        "preset_tablet_l": "태블릿 가로 모드 (1200 x 800)",
+        "preset_fullscreen": "전체화면 모드",
+        "preset_custom": "사용자 지정 해상도",
         "width_label": "너비 (가로 px):",
         "height_label": "높이 (세로 px):",
         "dpi_label": "DPI 배율:",
@@ -90,21 +91,21 @@ TRANSLATIONS = {
         "gboard_desc": "Gboard를 통해 한글/다국어 입력 및 노트북 키보드 한/영 전환을 지원합니다.",
         "btn_enable_gboard": "Gboard를 기본 키보드로 활성화",
         "btn_open_ime_settings": "안드로이드 언어/키보드 설정 열기",
-        "shortcut_tip": "💡 팁: 노트북 물리 키보드로 입력 시 [Shift + Space] 또는 [한/영] 키로 전환됩니다.",
-        "storage_section": "다운로드/폴더 공유 설정:",
-        "storage_desc": "리눅스 PC의 폴더를 안드로이드의 Download 폴더(/sdcard/Download)와 공유할지 선택합니다.",
-        "share_downloads_label": "호스트 ↔ 안드로이드 폴더 공유 활성화",
+        "shortcut_tip": "단축키 안내: 노트북 물리 키보드로 입력 시 [Shift + Space] 또는 [한/영] 키로 전환됩니다.",
+        "storage_section": "호스트-안드로이드 폴더 공유:",
+        "storage_desc": "리눅스 PC의 폴더를 안드로이드의 Download 폴더(/sdcard/Download)와 공유합니다.",
+        "share_downloads_label": "호스트-안드로이드 폴더 공유 활성화",
         "shared_folder_label": "공유할 호스트 폴더 경로:",
         "btn_browse": "폴더 찾기...",
         "btn_open_downloads": "선택된 폴더 열기",
         "network_section": "네트워크 및 유지관리:",
-        "btn_fix_network": "🛡️ 방화벽(UFW) 및 인터넷 차단 해결",
-        "btn_install_apk": "📦 APK 파일 직접 설치...",
-        "btn_stop_session": "⏹ Waydroid 종료",
-        "btn_launch": "🚀 Waydroid 실행하기",
+        "btn_fix_network": "방화벽(UFW) 및 인터넷 차단 해결",
+        "btn_install_apk": "APK 파일 직접 설치...",
+        "btn_stop_session": "Waydroid 종료",
+        "btn_launch": "Waydroid 실행하기",
         "status_running": "상태: 실행 중",
         "status_stopped": "상태: 꺼짐",
-        "msg_saved": "설정이 저장되었습니다!",
+        "msg_saved": "설정이 저장되었습니다.",
         "msg_apk_success": "APK가 성공적으로 설치되었습니다!",
         "msg_apk_fail": "APK 설치에 실패했습니다.",
         "msg_gboard_done": "Gboard가 기본 키보드로 설정되었습니다.",
@@ -112,17 +113,17 @@ TRANSLATIONS = {
     },
     "ja": {
         "title": "Waydroid 設定マネージャー",
-        "lang_label": "🌐 言語:",
+        "lang_label": "言語設定:",
         "tab_display": "ディスプレイとウィンドウ",
         "tab_input": "キーボードと入力",
         "tab_storage": "ストレージと共有",
         "tab_network": "ネットワークとツール",
         "window_presets": "ウィンドウサイズ プリセット:",
-        "preset_phone": "📱 スマホ (600 x 1024)",
-        "preset_tablet_p": "📖 タブレット 縦 (800 x 1200)",
-        "preset_tablet_l": "💻 タブレット 横 (1200 x 800)",
-        "preset_fullscreen": "🖥️ 全画面表示",
-        "preset_custom": "⚙️ カスタム解像度",
+        "preset_phone": "スマホモード (600 x 1024)",
+        "preset_tablet_p": "タブレット縦モード (800 x 1200)",
+        "preset_tablet_l": "タブレット横モード (1200 x 800)",
+        "preset_fullscreen": "全画面表示モード",
+        "preset_custom": "カスタム解像度",
         "width_label": "幅 (px):",
         "height_label": "高さ (px):",
         "dpi_label": "DPI 密度:",
@@ -130,21 +131,21 @@ TRANSLATIONS = {
         "gboard_desc": "Gboardで日本語入力と物理キーボード切り替えをサポートします。",
         "btn_enable_gboard": "Gboardをデフォルトに設定",
         "btn_open_ime_settings": "Androidキーボード設定を開く",
-        "shortcut_tip": "💡 ヒント: 物理キーボードで Shift + Space を押して言語を切り替えます。",
+        "shortcut_tip": "ヒント: 物理キーボードで [Shift + Space] を押して言語を切り替えます。",
         "storage_section": "フォルダ共有オプション:",
-        "storage_desc": "ホストPCのフォルダをAndroid (/sdcard/Download) と共有するか選択します。",
+        "storage_desc": "ホストPCのフォルダをAndroid (/sdcard/Download) と共有します。",
         "share_downloads_label": "ホスト ↔ Android フォルダ共有を有効化",
         "shared_folder_label": "共有するホストフォルダ:",
         "btn_browse": "参照...",
         "btn_open_downloads": "選択したフォルダを開く",
         "network_section": "ネットワークとメンテナンス:",
-        "btn_fix_network": "🛡️ UFWファイアウォール & ネット修復",
-        "btn_install_apk": "📦 APKファイルをインストール...",
-        "btn_stop_session": "⏹ Waydroid 停止",
-        "btn_launch": "🚀 Waydroid 起動",
+        "btn_fix_network": "UFWファイアウォール & ネット修復",
+        "btn_install_apk": "APKファイルをインストール...",
+        "btn_stop_session": "Waydroid 停止",
+        "btn_launch": "Waydroid 起動",
         "status_running": "ステータス: 実行中",
         "status_stopped": "ステータス: 停止中",
-        "msg_saved": "設定が保存されました！",
+        "msg_saved": "設定が保存されました。",
         "msg_apk_success": "APKが正常にインストールされました！",
         "msg_apk_fail": "APKのインストールに失敗しました。",
         "msg_gboard_done": "Gboardがデフォルトキーボードに設定されました。",
@@ -152,17 +153,17 @@ TRANSLATIONS = {
     },
     "zh": {
         "title": "Waydroid 设置管理器",
-        "lang_label": "🌐 语言:",
+        "lang_label": "语言设置:",
         "tab_display": "显示与窗口",
         "tab_input": "键盘与输入",
         "tab_storage": "存储与共享",
         "tab_network": "网络与工具",
         "window_presets": "窗口尺寸预设:",
-        "preset_phone": "📱 手机 (600 x 1024)",
-        "preset_tablet_p": "📖 平板竖屏 (800 x 1200)",
-        "preset_tablet_l": "💻 平板横屏 (1200 x 800)",
-        "preset_fullscreen": "🖥️ 全屏模式",
-        "preset_custom": "⚙️ 自定义分辨率",
+        "preset_phone": "手机模式 (600 x 1024)",
+        "preset_tablet_p": "平板竖屏 (800 x 1200)",
+        "preset_tablet_l": "平板横屏 (1200 x 800)",
+        "preset_fullscreen": "全屏模式",
+        "preset_custom": "自定义分辨率",
         "width_label": "宽度 (px):",
         "height_label": "高度 (px):",
         "dpi_label": "DPI 密度:",
@@ -170,21 +171,21 @@ TRANSLATIONS = {
         "gboard_desc": "Gboard支持多语言输入和实体键盘切换。",
         "btn_enable_gboard": "将Gboard设为默认输入法",
         "btn_open_ime_settings": "打开Android输入法设置",
-        "shortcut_tip": "💡 提示: 在实体键盘上按 Shift + Space 切换输入语言。",
-        "storage_section": "文件夹共享选项:",
-        "storage_desc": "选择是否与 Android (/sdcard/Download) 共享主机电脑文件夹。",
-        "share_downloads_label": "启用 主机 ↔ Android 文件夹共享",
+        "shortcut_tip": "提示: 在实体键盘上按 [Shift + Space] 切换输入语言。",
+        "storage_section": "文件夹共享设置:",
+        "storage_desc": "将主机电脑文件夹与 Android (/sdcard/Download) 共享。",
+        "share_downloads_label": "启用主机与Android文件夹共享",
         "shared_folder_label": "共享的主机文件夹路径:",
         "btn_browse": "浏览...",
         "btn_open_downloads": "打开所选文件夹",
         "network_section": "网络与维护:",
-        "btn_fix_network": "🛡️ 修复UFW防火墙与网络",
-        "btn_install_apk": "📦 安装APK文件...",
-        "btn_stop_session": "⏹ 停止 Waydroid",
-        "btn_launch": "🚀 启动 Waydroid",
+        "btn_fix_network": "修复UFW防火墙与网络",
+        "btn_install_apk": "安装APK文件...",
+        "btn_stop_session": "停止 Waydroid",
+        "btn_launch": "启动 Waydroid",
         "status_running": "状态: 运行中",
         "status_stopped": "状态: 已停止",
-        "msg_saved": "设置已成功保存！",
+        "msg_saved": "设置已成功保存。",
         "msg_apk_success": "APK 安装成功！",
         "msg_apk_fail": "APK 安装失败。",
         "msg_gboard_done": "已将 Gboard 设置为默认输入法。",
@@ -192,159 +193,159 @@ TRANSLATIONS = {
     },
     "es": {
         "title": "Administrador de Waydroid",
-        "lang_label": "🌐 Idioma:",
+        "lang_label": "Idioma:",
         "tab_display": "Pantalla y Ventana",
         "tab_input": "Teclado y Entrada",
         "tab_storage": "Almacenamiento",
         "tab_network": "Red y Herramientas",
         "window_presets": "Tamaño de Ventana:",
-        "preset_phone": "📱 Móvil (600 x 1024)",
-        "preset_tablet_p": "📖 Tableta Vertical (800 x 1200)",
-        "preset_tablet_l": "💻 Tableta Horizontal (1200 x 800)",
-        "preset_fullscreen": "🖥️ Pantalla Completa",
-        "preset_custom": "⚙️ Personalizado",
+        "preset_phone": "Modo Movil (600 x 1024)",
+        "preset_tablet_p": "Modo Tableta Vertical (800 x 1200)",
+        "preset_tablet_l": "Modo Tableta Horizontal (1200 x 800)",
+        "preset_fullscreen": "Pantalla Completa",
+        "preset_custom": "Resolucion Personalizada",
         "width_label": "Ancho (px):",
         "height_label": "Alto (px):",
         "dpi_label": "Densidad DPI:",
-        "gboard_section": "Configuración de Gboard:",
-        "gboard_desc": "Gboard admite escritura multilingüe y teclado físico.",
+        "gboard_section": "Configuracion de Gboard:",
+        "gboard_desc": "Gboard admite escritura multilingue y cambio de idioma en teclado fisico.",
         "btn_enable_gboard": "Establecer Gboard por Defecto",
         "btn_open_ime_settings": "Abrir Ajustes de Teclado Android",
-        "shortcut_tip": "💡 Consejo: Usa Shift + Space para cambiar de idioma en teclado físico.",
+        "shortcut_tip": "Consejo: Usa [Shift + Space] para cambiar de idioma en teclado fisico.",
         "storage_section": "Opciones de Compartir:",
-        "storage_desc": "Selecciona si deseas compartir una carpeta del host con Android (/sdcard/Download).",
-        "share_downloads_label": "Habilitar carpeta compartida Host ↔ Android",
+        "storage_desc": "Comparte una carpeta del host con Android (/sdcard/Download).",
+        "share_downloads_label": "Habilitar carpeta compartida Host-Android",
         "shared_folder_label": "Carpeta del host a compartir:",
         "btn_browse": "Examinar...",
         "btn_open_downloads": "Abrir Carpeta Seleccionada",
         "network_section": "Red y Mantenimiento:",
-        "btn_fix_network": "🛡️ Reparar Cortafuegos UFW",
-        "btn_install_apk": "📦 Instalar archivo APK...",
-        "btn_stop_session": "⏹ Detener Waydroid",
-        "btn_launch": "🚀 Iniciar Waydroid",
-        "status_running": "Estado: En ejecución",
+        "btn_fix_network": "Reparar Cortafuegos UFW",
+        "btn_install_apk": "Instalar archivo APK...",
+        "btn_stop_session": "Detener Waydroid",
+        "btn_launch": "Iniciar Waydroid",
+        "status_running": "Estado: En ejecucion",
         "status_stopped": "Estado: Detenido",
-        "msg_saved": "¡Ajustes guardados!",
-        "msg_apk_success": "¡APK instalado con éxito!",
+        "msg_saved": "Ajustes guardados correctamente.",
+        "msg_apk_success": "APK instalado con exito!",
         "msg_apk_fail": "Error al instalar APK.",
         "msg_gboard_done": "Gboard configurado como teclado predeterminado.",
         "msg_net_fixed": "Script de red ejecutado.",
     },
     "de": {
         "title": "Waydroid Einstellungen",
-        "lang_label": "🌐 Sprache:",
+        "lang_label": "Sprache:",
         "tab_display": "Anzeige & Fenster",
         "tab_input": "Tastatur & Eingabe",
         "tab_storage": "Speicher & Freigabe",
         "tab_network": "Netzwerk & Tools",
-        "window_presets": "Fenstergrößen-Voreinstellungen:",
-        "preset_phone": "📱 Smartphone (600 x 1024)",
-        "preset_tablet_p": "📖 Tablet Hochformat (800 x 1200)",
-        "preset_tablet_l": "💻 Tablet Querformat (1200 x 800)",
-        "preset_fullscreen": "🖥️ Vollbild",
-        "preset_custom": "⚙️ Benutzerdefiniert",
+        "window_presets": "Fenstergroessen-Voreinstellungen:",
+        "preset_phone": "Smartphone-Modus (600 x 1024)",
+        "preset_tablet_p": "Tablet Hochformat (800 x 1200)",
+        "preset_tablet_l": "Tablet Querformat (1200 x 800)",
+        "preset_fullscreen": "Vollbildmodus",
+        "preset_custom": "Benutzerdefinierte Aufloesung",
         "width_label": "Breite (px):",
-        "height_label": "Höhe (px):",
+        "height_label": "Hoehe (px):",
         "dpi_label": "DPI-Dichte:",
         "gboard_section": "Gboard (Google-Tastatur) Einstellungen:",
-        "gboard_desc": "Gboard unterstützt mehrsprachige Eingabe und Tastaturwechsel.",
+        "gboard_desc": "Gboard unterstuetzt mehrsprachige Eingabe und Tastaturwechsel.",
         "btn_enable_gboard": "Gboard als Standard festlegen",
-        "btn_open_ime_settings": "Android-Tastatureinstellungen öffnen",
-        "shortcut_tip": "💡 Tipp: Mit Umschalt + Leertaste zwischen Sprachen wechseln.",
+        "btn_open_ime_settings": "Android-Tastatureinstellungen oeffnen",
+        "shortcut_tip": "Tipp: Mit [Umschalt + Leertaste] zwischen Sprachen wechseln.",
         "storage_section": "Ordnerfreigabe-Optionen:",
-        "storage_desc": "Wählen Sie, ob ein Host-Ordner für Android (/sdcard/Download) freigegeben werden soll.",
-        "share_downloads_label": "Host ↔ Android Ordnerfreigabe aktivieren",
+        "storage_desc": "Host-Ordner fuer Android (/sdcard/Download) freigeben.",
+        "share_downloads_label": "Host-Android Ordnerfreigabe aktivieren",
         "shared_folder_label": "Freizugebender Host-Ordner:",
         "btn_browse": "Durchsuchen...",
-        "btn_open_downloads": "Ausgewählten Ordner öffnen",
+        "btn_open_downloads": "Ausgewaehlten Ordner oeffnen",
         "network_section": "Netzwerk & Wartung:",
-        "btn_fix_network": "🛡️ UFW-Firewall & Netzwerk reparieren",
-        "btn_install_apk": "📦 APK-Datei installieren...",
-        "btn_stop_session": "⏹ Waydroid stoppen",
-        "btn_launch": "🚀 Waydroid starten",
-        "status_running": "Status: Läuft",
+        "btn_fix_network": "UFW-Firewall & Netzwerk reparieren",
+        "btn_install_apk": "APK-Datei installieren...",
+        "btn_stop_session": "Waydroid stoppen",
+        "btn_launch": "Waydroid starten",
+        "status_running": "Status: Laeuft",
         "status_stopped": "Status: Gestoppt",
-        "msg_saved": "Einstellungen erfolgreich gespeichert!",
+        "msg_saved": "Einstellungen erfolgreich gespeichert.",
         "msg_apk_success": "APK erfolgreich installiert!",
         "msg_apk_fail": "Installation der APK fehlgeschlagen.",
         "msg_gboard_done": "Gboard als Standardtastatur aktiviert.",
-        "msg_net_fixed": "Netzwerk-Skript ausgeführt.",
+        "msg_net_fixed": "Netzwerk-Skript ausgefuehrt.",
     },
     "fr": {
         "title": "Gestionnaire Waydroid",
-        "lang_label": "🌐 Langue:",
-        "tab_display": "Affichage & Fenêtre",
+        "lang_label": "Langue :",
+        "tab_display": "Affichage & Fenetre",
         "tab_input": "Clavier & Saisie",
         "tab_storage": "Stockage & Partage",
-        "tab_network": "Réseau & Outils",
-        "window_presets": "Préréglages de Taille:",
-        "preset_phone": "📱 Téléphone (600 x 1024)",
-        "preset_tablet_p": "📖 Tablette Portrait (800 x 1200)",
-        "preset_tablet_l": "💻 Tablette Paysage (1200 x 800)",
-        "preset_fullscreen": "🖥️ Plein écran",
-        "preset_custom": "⚙️ Personnalisé",
-        "width_label": "Largeur (px):",
-        "height_label": "Hauteur (px):",
-        "dpi_label": "Densité DPI:",
-        "gboard_section": "Paramètres Gboard:",
+        "tab_network": "Reseau & Outils",
+        "window_presets": "Prereglages de Taille :",
+        "preset_phone": "Mode Telephone (600 x 1024)",
+        "preset_tablet_p": "Mode Tablette Portrait (800 x 1200)",
+        "preset_tablet_l": "Mode Tablette Paysage (1200 x 800)",
+        "preset_fullscreen": "Mode Plein ecran",
+        "preset_custom": "Resolution Personnalisee",
+        "width_label": "Largeur (px) :",
+        "height_label": "Hauteur (px) :",
+        "dpi_label": "Densite DPI :",
+        "gboard_section": "Parametres Gboard :",
         "gboard_desc": "Gboard prend en charge la saisie multilingue et le clavier physique.",
-        "btn_enable_gboard": "Définir Gboard par défaut",
-        "btn_open_ime_settings": "Ouvrir paramètres clavier Android",
-        "shortcut_tip": "💡 Astuce: Utilisez Shift + Espace pour changer de langue.",
-        "storage_section": "Options de Partage de Dossier:",
-        "storage_desc": "Choisissez si vous souhaitez partager un dossier hôte avec Android (/sdcard/Download).",
-        "share_downloads_label": "Activer le partage de dossier Hôte ↔ Android",
-        "shared_folder_label": "Dossier hôte à partager :",
+        "btn_enable_gboard": "Definir Gboard par defaut",
+        "btn_open_ime_settings": "Ouvrir parametres clavier Android",
+        "shortcut_tip": "Astuce : Utilisez [Shift + Espace] pour changer de langue.",
+        "storage_section": "Options de Partage de Dossier :",
+        "storage_desc": "Partager un dossier hote avec Android (/sdcard/Download).",
+        "share_downloads_label": "Activer le partage de dossier Hote-Android",
+        "shared_folder_label": "Dossier hote a partager :",
         "btn_browse": "Parcourir...",
-        "btn_open_downloads": "Ouvrir le dossier sélectionné",
-        "network_section": "Réseau & Maintenance:",
-        "btn_fix_network": "🛡️ Réparer pare-feu UFW",
-        "btn_install_apk": "📦 Installer un fichier APK...",
-        "btn_stop_session": "⏹ Arrêter Waydroid",
-        "btn_launch": "🚀 Lancer Waydroid",
-        "status_running": "Statut: En cours",
-        "status_stopped": "Statut: Arrêté",
-        "msg_saved": "Paramètres enregistrés !",
-        "msg_apk_success": "APK installée avec succès !",
-        "msg_apk_fail": "Échec de l'installation de l'APK.",
-        "msg_gboard_done": "Gboard configuré comme clavier par défaut.",
-        "msg_net_fixed": "Script réseau exécuté.",
+        "btn_open_downloads": "Ouvrir le dossier selectionne",
+        "network_section": "Reseau & Maintenance :",
+        "btn_fix_network": "Reparer pare-feu UFW",
+        "btn_install_apk": "Installer un fichier APK...",
+        "btn_stop_session": "Arreter Waydroid",
+        "btn_launch": "Lancer Waydroid",
+        "status_running": "Statut : En cours",
+        "status_stopped": "Statut : Arrete",
+        "msg_saved": "Parametres enregistres avec succes.",
+        "msg_apk_success": "APK installee avec succes !",
+        "msg_apk_fail": "Echec de l'installation de l'APK.",
+        "msg_gboard_done": "Gboard configure comme clavier par defaut.",
+        "msg_net_fixed": "Script reseau execute.",
     },
     "it": {
         "title": "Gestore Impostazioni Waydroid",
-        "lang_label": "🌐 Lingua:",
+        "lang_label": "Lingua:",
         "tab_display": "Schermo e Finestra",
         "tab_input": "Tastiera e Input",
         "tab_storage": "Archiviazione",
         "tab_network": "Rete e Strumenti",
         "window_presets": "Dimensioni Finestra:",
-        "preset_phone": "📱 Telefono (600 x 1024)",
-        "preset_tablet_p": "📖 Tablet Verticale (800 x 1200)",
-        "preset_tablet_l": "💻 Tablet Orizzontale (1200 x 800)",
-        "preset_fullscreen": "🖥️ Schermo Intero",
-        "preset_custom": "⚙️ Personalizzato",
+        "preset_phone": "Modo Telefono (600 x 1024)",
+        "preset_tablet_p": "Modo Tablet Verticale (800 x 1200)",
+        "preset_tablet_l": "Modo Tablet Orizzontale (1200 x 800)",
+        "preset_fullscreen": "Schermo Intero",
+        "preset_custom": "Risoluzione Personalizzata",
         "width_label": "Larghezza (px):",
         "height_label": "Altezza (px):",
-        "dpi_label": "Densità DPI:",
+        "dpi_label": "Densita DPI:",
         "gboard_section": "Impostazioni Gboard:",
         "gboard_desc": "Gboard supporta la digitazione multilingue e la tastiera fisica.",
         "btn_enable_gboard": "Imposta Gboard come Predefinito",
         "btn_open_ime_settings": "Apri Impostazioni Tastiera Android",
-        "shortcut_tip": "💡 Suggerimento: Usa Shift + Spazio per cambiare lingua sulla tastiera fisica.",
+        "shortcut_tip": "Suggerimento: Usa [Shift + Spazio] per cambiare lingua sulla tastiera fisica.",
         "storage_section": "Opzioni di Condivisione Cartelle:",
-        "storage_desc": "Seleziona se condividere una cartella del computer host con Android (/sdcard/Download).",
-        "share_downloads_label": "Abilita condivisione cartella Host ↔ Android",
+        "storage_desc": "Condividi una cartella host con Android (/sdcard/Download).",
+        "share_downloads_label": "Abilita condivisione cartella Host-Android",
         "shared_folder_label": "Cartella host da condividere:",
         "btn_browse": "Sfoglia...",
         "btn_open_downloads": "Apri Cartella Selezionata",
         "network_section": "Rete e Manutenzione:",
-        "btn_fix_network": "🛡️ Ripara Firewall UFW & Rete",
-        "btn_install_apk": "📦 Installa file APK...",
-        "btn_stop_session": "⏹ Ferma Waydroid",
-        "btn_launch": "🚀 Avvia Waydroid",
+        "btn_fix_network": "Ripara Firewall UFW & Rete",
+        "btn_install_apk": "Installa file APK...",
+        "btn_stop_session": "Ferma Waydroid",
+        "btn_launch": "Avvia Waydroid",
         "status_running": "Stato: In esecuzione",
         "status_stopped": "Stato: Arrestato",
-        "msg_saved": "Impostazioni salvate con successo!",
+        "msg_saved": "Impostazioni salvate con successo.",
         "msg_apk_success": "APK installato con successo!",
         "msg_apk_fail": "Impossibile installare APK.",
         "msg_gboard_done": "Gboard impostata come tastiera predefinita.",
@@ -371,13 +372,53 @@ class WaydroidManagerApp(tk.Tk):
         
         self.title("Waydroid Settings Manager")
         self.geometry("640x580")
-        self.minsize(560, 520)
+        self.minsize(580, 520)
+        
+        # Configure Fonts (Prioritize Google Noto Sans / Ubuntu TrueType fonts)
+        self.configure_system_fonts()
         
         self.style = ttk.Style()
-        self.style.theme_use("clam")
-        
+        try:
+            self.style.theme_use("clam")
+        except Exception:
+            pass
+            
+        self.configure_styles()
         self.create_widgets()
         self.update_language(self.current_lang)
+
+    def configure_system_fonts(self):
+        available_fonts = tkfont.families()
+        chosen_font = "DejaVu Sans"
+        for candidate in ["Noto Sans CJK KR", "Noto Sans", "Ubuntu", "DejaVu Sans", "Sans"]:
+            if candidate in available_fonts:
+                chosen_font = candidate
+                break
+
+        self.base_font = (chosen_font, 10)
+        self.bold_font = (chosen_font, 10, "bold")
+        self.title_font = (chosen_font, 11, "bold")
+        self.italic_font = (chosen_font, 9, "italic")
+
+        # Configure default Tk fonts
+        for name in ["TkDefaultFont", "TkTextFont", "TkMenuFont"]:
+            try:
+                tkfont.nametofont(name).configure(family=chosen_font, size=10)
+            except Exception:
+                pass
+        try:
+            tkfont.nametofont("TkHeadingFont").configure(family=chosen_font, size=11, weight="bold")
+        except Exception:
+            pass
+
+    def configure_styles(self):
+        self.style.configure(".", font=self.base_font)
+        self.style.configure("TLabel", font=self.base_font)
+        self.style.configure("TButton", font=self.base_font, padding=4)
+        self.style.configure("TRadiobutton", font=self.base_font)
+        self.style.configure("TCheckbutton", font=self.base_font)
+        self.style.configure("TNotebook.Tab", font=self.base_font, padding=(10, 4))
+        self.style.configure("Accent.TButton", font=self.bold_font, foreground="#ffffff", background="#1a73e8")
 
     def load_config(self):
         config = DEFAULT_CONFIG.copy()
@@ -402,18 +443,18 @@ class WaydroidManagerApp(tk.Tk):
         top_frame = ttk.Frame(self, padding=(12, 10))
         top_frame.pack(fill="x")
         
-        self.lbl_lang = ttk.Label(top_frame, text=self.tr("lang_label"), font=("Arial", 10, "bold"))
+        self.lbl_lang = ttk.Label(top_frame, text=self.tr("lang_label"), font=self.bold_font)
         self.lbl_lang.pack(side="left", padx=(0, 8))
         
-        self.combo_lang = ttk.Combobox(top_frame, state="readonly", width=22)
+        self.combo_lang = ttk.Combobox(top_frame, state="readonly", width=22, font=self.base_font)
         self.combo_lang["values"] = [name for _, name in LANGUAGE_NAMES]
         current_idx = [code for code, _ in LANGUAGE_NAMES].index(self.current_lang) if self.current_lang in [code for code, _ in LANGUAGE_NAMES] else 0
         self.combo_lang.current(current_idx)
         self.combo_lang.bind("<<ComboboxSelected>>", self.on_language_change)
         self.combo_lang.pack(side="left")
         
-        self.lbl_status = ttk.Label(top_frame, text="", font=("Arial", 9, "italic"))
-        self.lbl_status.pack(side="right")
+        self.lbl_status = ttk.Label(top_frame, text="", font=self.italic_font)
+        self.lbl_status.pack(side="right", padx=6)
         self.check_status()
 
         # Notebook (Tabs)
@@ -451,50 +492,50 @@ class WaydroidManagerApp(tk.Tk):
         self.btn_launch.pack(side="right", padx=5)
 
     def setup_display_tab(self):
-        self.lbl_presets = ttk.Label(self.tab_display, text=self.tr("window_presets"), font=("Arial", 10, "bold"))
+        self.lbl_presets = ttk.Label(self.tab_display, text=self.tr("window_presets"), font=self.bold_font)
         self.lbl_presets.pack(anchor="w", pady=(0, 8))
         
         self.mode_var = tk.StringVar(value=self.config_data.get("mode", "tablet_portrait"))
         
         self.rb_phone = ttk.Radiobutton(self.tab_display, text=self.tr("preset_phone"), value="phone", variable=self.mode_var, command=self.on_mode_change)
-        self.rb_phone.pack(anchor="w", pady=2)
+        self.rb_phone.pack(anchor="w", pady=3)
         
         self.rb_tablet_p = ttk.Radiobutton(self.tab_display, text=self.tr("preset_tablet_p"), value="tablet_portrait", variable=self.mode_var, command=self.on_mode_change)
-        self.rb_tablet_p.pack(anchor="w", pady=2)
+        self.rb_tablet_p.pack(anchor="w", pady=3)
         
         self.rb_tablet_l = ttk.Radiobutton(self.tab_display, text=self.tr("preset_tablet_l"), value="tablet_landscape", variable=self.mode_var, command=self.on_mode_change)
-        self.rb_tablet_l.pack(anchor="w", pady=2)
+        self.rb_tablet_l.pack(anchor="w", pady=3)
         
         self.rb_full = ttk.Radiobutton(self.tab_display, text=self.tr("preset_fullscreen"), value="fullscreen", variable=self.mode_var, command=self.on_mode_change)
-        self.rb_full.pack(anchor="w", pady=2)
+        self.rb_full.pack(anchor="w", pady=3)
         
         self.rb_custom = ttk.Radiobutton(self.tab_display, text=self.tr("preset_custom"), value="custom", variable=self.mode_var, command=self.on_mode_change)
-        self.rb_custom.pack(anchor="w", pady=2)
+        self.rb_custom.pack(anchor="w", pady=3)
         
         # Custom Resolution inputs
         self.custom_frame = ttk.LabelFrame(self.tab_display, text="Custom Size", padding=10)
-        self.custom_frame.pack(fill="x", pady=10)
+        self.custom_frame.pack(fill="x", pady=12)
         
         self.lbl_w = ttk.Label(self.custom_frame, text=self.tr("width_label"))
         self.lbl_w.grid(row=0, column=0, padx=5, pady=4, sticky="w")
-        self.ent_w = ttk.Entry(self.custom_frame, width=8)
+        self.ent_w = ttk.Entry(self.custom_frame, width=8, font=self.base_font)
         self.ent_w.insert(0, str(self.config_data.get("custom_width", 1080)))
         self.ent_w.grid(row=0, column=1, padx=5, pady=4)
         
         self.lbl_h = ttk.Label(self.custom_frame, text=self.tr("height_label"))
         self.lbl_h.grid(row=0, column=2, padx=5, pady=4, sticky="w")
-        self.ent_h = ttk.Entry(self.custom_frame, width=8)
+        self.ent_h = ttk.Entry(self.custom_frame, width=8, font=self.base_font)
         self.ent_h.insert(0, str(self.config_data.get("custom_height", 1920)))
         self.ent_h.grid(row=0, column=3, padx=5, pady=4)
         
         self.lbl_dpi = ttk.Label(self.custom_frame, text=self.tr("dpi_label"))
         self.lbl_dpi.grid(row=0, column=4, padx=5, pady=4, sticky="w")
-        self.ent_dpi = ttk.Entry(self.custom_frame, width=6)
+        self.ent_dpi = ttk.Entry(self.custom_frame, width=6, font=self.base_font)
         self.ent_dpi.insert(0, str(self.config_data.get("dpi", 280)))
         self.ent_dpi.grid(row=0, column=5, padx=5, pady=4)
 
     def setup_input_tab(self):
-        self.lbl_gboard_sec = ttk.Label(self.tab_input, text=self.tr("gboard_section"), font=("Arial", 10, "bold"))
+        self.lbl_gboard_sec = ttk.Label(self.tab_input, text=self.tr("gboard_section"), font=self.bold_font)
         self.lbl_gboard_sec.pack(anchor="w", pady=(0, 6))
         
         self.lbl_gboard_desc = ttk.Label(self.tab_input, text=self.tr("gboard_desc"), wraplength=560)
@@ -506,11 +547,11 @@ class WaydroidManagerApp(tk.Tk):
         self.btn_ime_settings = ttk.Button(self.tab_input, text=self.tr("btn_open_ime_settings"), command=self.open_ime_settings)
         self.btn_ime_settings.pack(anchor="w", pady=4)
         
-        self.lbl_tip = ttk.Label(self.tab_input, text=self.tr("shortcut_tip"), foreground="#2b5797", wraplength=560, font=("Arial", 9, "italic"))
+        self.lbl_tip = ttk.Label(self.tab_input, text=self.tr("shortcut_tip"), foreground="#1a73e8", wraplength=560, font=self.italic_font)
         self.lbl_tip.pack(anchor="w", pady=(16, 0))
 
     def setup_storage_tab(self):
-        self.lbl_storage_sec = ttk.Label(self.tab_storage, text=self.tr("storage_section"), font=("Arial", 10, "bold"))
+        self.lbl_storage_sec = ttk.Label(self.tab_storage, text=self.tr("storage_section"), font=self.bold_font)
         self.lbl_storage_sec.pack(anchor="w", pady=(0, 4))
         
         self.lbl_storage_desc = ttk.Label(self.tab_storage, text=self.tr("storage_desc"), wraplength=560)
@@ -535,7 +576,7 @@ class WaydroidManagerApp(tk.Tk):
         path_row = ttk.Frame(self.folder_frame)
         path_row.pack(fill="x", pady=2)
         
-        self.ent_folder = ttk.Entry(path_row)
+        self.ent_folder = ttk.Entry(path_row, font=self.base_font)
         current_path = self.config_data.get("shared_folder_path", os.path.expanduser("~/Downloads"))
         self.ent_folder.insert(0, current_path)
         self.ent_folder.pack(side="left", fill="x", expand=True, padx=(0, 6))
@@ -547,7 +588,7 @@ class WaydroidManagerApp(tk.Tk):
         self.btn_open_dl.pack(anchor="w", pady=10)
 
     def setup_network_tab(self):
-        self.lbl_net_sec = ttk.Label(self.tab_network, text=self.tr("network_section"), font=("Arial", 10, "bold"))
+        self.lbl_net_sec = ttk.Label(self.tab_network, text=self.tr("network_section"), font=self.bold_font)
         self.lbl_net_sec.pack(anchor="w", pady=(0, 8))
         
         self.btn_fix_net = ttk.Button(self.tab_network, text=self.tr("btn_fix_network"), command=self.fix_network)
@@ -652,11 +693,11 @@ class WaydroidManagerApp(tk.Tk):
         try:
             out = subprocess.check_output(["waydroid", "status"], text=True, stderr=subprocess.DEVNULL)
             if "Session:\tRUNNING" in out or "Session: RUNNING" in out:
-                self.lbl_status.config(text=self.tr("status_running"), foreground="green")
+                self.lbl_status.config(text=self.tr("status_running"), foreground="#2e7d32")
             else:
-                self.lbl_status.config(text=self.tr("status_stopped"), foreground="gray")
+                self.lbl_status.config(text=self.tr("status_stopped"), foreground="#757575")
         except Exception:
-            self.lbl_status.config(text=self.tr("status_stopped"), foreground="gray")
+            self.lbl_status.config(text=self.tr("status_stopped"), foreground="#757575")
 
     def enable_gboard(self):
         try:
