@@ -1,37 +1,93 @@
 #!/usr/bin/env python3
-"""
-Waydroid Settings Manager (GUI)
-Clean UI with Multi-language support (EN, KO, JA, ZH, ES, DE, FR, IT)
-Optimized for Linux FreeType/Noto TrueType font rendering without broken emojis.
+"""Waydroid Settings Manager (GUI).
+
+A modern, multi-language settings manager and runner for Waydroid on Linux.
+Supports X11 (via Weston) and Wayland, resolution presets, Gboard configuration,
+and host-to-Android folder sharing.
 """
 
-import os
-import sys
+from __future__ import annotations
+
 import json
 import subprocess
+import sys
+from dataclasses import asdict, dataclass
+from enum import Enum
+from pathlib import Path
 import tkinter as tk
 import tkinter.font as tkfont
-from tkinter import ttk, messagebox, filedialog
+from tkinter import filedialog, messagebox, ttk
+from typing import Dict, Final, List, Optional, Tuple
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_PATH = os.path.expanduser("~/.config/waydroid_settings.json")
+# Constants & Paths
+SCRIPT_DIR: Final[Path] = Path(__file__).resolve().parent
+CONFIG_DIR: Final[Path] = Path.home() / ".config"
+CONFIG_PATH: Final[Path] = CONFIG_DIR / "waydroid_settings.json"
+DEFAULT_SHARED_DIR: Final[Path] = Path.home() / "Downloads"
 
-# Default Configuration
-DEFAULT_CONFIG = {
-    "language": "en",
-    "mode": "tablet_portrait",
-    "width": 800,
-    "height": 1200,
-    "dpi": 280,
-    "share_downloads": True,
-    "shared_folder_path": os.path.expanduser("~/Downloads"),
-    "custom_width": 1080,
-    "custom_height": 1920,
-}
 
-# Clean Translations Dictionary without broken Unicode emoji glyphs
-TRANSLATIONS = {
-    "en": {
+class Language(str, Enum):
+    """Supported UI Languages."""
+    EN = "en"
+    KO = "ko"
+    JA = "ja"
+    ZH = "zh"
+    ES = "es"
+    DE = "de"
+    FR = "fr"
+    IT = "it"
+
+
+class WindowMode(str, Enum):
+    """Waydroid Window Display Presets."""
+    PHONE = "phone"
+    TABLET_PORTRAIT = "tablet_portrait"
+    TABLET_LANDSCAPE = "tablet_landscape"
+    FULLSCREEN = "fullscreen"
+    CUSTOM = "custom"
+
+
+@dataclass
+class AppConfig:
+    """Waydroid Settings Configuration Data Model."""
+    language: str = Language.EN.value
+    mode: str = WindowMode.TABLET_PORTRAIT.value
+    width: int = 800
+    height: int = 1200
+    dpi: int = 280
+    share_downloads: bool = True
+    shared_folder_path: str = str(DEFAULT_SHARED_DIR)
+    custom_width: int = 1080
+    custom_height: int = 1920
+
+    @classmethod
+    def load(cls, path: Path = CONFIG_PATH) -> AppConfig:
+        """Load configuration from JSON file with graceful fallback."""
+        if not path.is_file():
+            return cls()
+        try:
+            raw_data = json.loads(path.read_text(encoding="utf-8"))
+            valid_fields = {field for field in cls.__dataclass_fields__}
+            filtered = {k: v for k, v in raw_data.items() if k in valid_fields}
+            return cls(**filtered)
+        except (json.JSONDecodeError, OSError, TypeError):
+            return cls()
+
+    def save(self, path: Path = CONFIG_PATH) -> None:
+        """Persist configuration to JSON file."""
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(
+                json.dumps(asdict(self), indent=2, ensure_ascii=False),
+                encoding="utf-8"
+            )
+        except OSError as err:
+            print(f"Warning: Failed to save config: {err}", file=sys.stderr)
+
+
+# Multi-Language Translation Catalog
+TRANSLATIONS: Final[Dict[str, Dict[str, str]]] = {
+    Language.EN.value: {
         "title": "Waydroid Settings Manager",
         "lang_label": "Language:",
         "tab_display": "Display & Window",
@@ -71,7 +127,7 @@ TRANSLATIONS = {
         "msg_gboard_done": "Gboard has been configured as the default keyboard.",
         "msg_net_fixed": "Network configuration script executed.",
     },
-    "ko": {
+    Language.KO.value: {
         "title": "Waydroid 환경설정 매니저",
         "lang_label": "언어 설정:",
         "tab_display": "디스플레이 및 창",
@@ -111,7 +167,7 @@ TRANSLATIONS = {
         "msg_gboard_done": "Gboard가 기본 키보드로 설정되었습니다.",
         "msg_net_fixed": "네트워크 복구 스크립트를 실행했습니다.",
     },
-    "ja": {
+    Language.JA.value: {
         "title": "Waydroid 設定マネージャー",
         "lang_label": "言語設定:",
         "tab_display": "ディスプレイとウィンドウ",
@@ -151,7 +207,7 @@ TRANSLATIONS = {
         "msg_gboard_done": "Gboardがデフォルトキーボードに設定されました。",
         "msg_net_fixed": "ネットワーク設定スクリプトを実行しました。",
     },
-    "zh": {
+    Language.ZH.value: {
         "title": "Waydroid 设置管理器",
         "lang_label": "语言设置:",
         "tab_display": "显示与窗口",
@@ -191,7 +247,7 @@ TRANSLATIONS = {
         "msg_gboard_done": "已将 Gboard 设置为默认输入法。",
         "msg_net_fixed": "网络修复脚本已执行。",
     },
-    "es": {
+    Language.ES.value: {
         "title": "Administrador de Waydroid",
         "lang_label": "Idioma:",
         "tab_display": "Pantalla y Ventana",
@@ -231,7 +287,7 @@ TRANSLATIONS = {
         "msg_gboard_done": "Gboard configurado como teclado predeterminado.",
         "msg_net_fixed": "Script de red ejecutado.",
     },
-    "de": {
+    Language.DE.value: {
         "title": "Waydroid Einstellungen",
         "lang_label": "Sprache:",
         "tab_display": "Anzeige & Fenster",
@@ -271,7 +327,7 @@ TRANSLATIONS = {
         "msg_gboard_done": "Gboard als Standardtastatur aktiviert.",
         "msg_net_fixed": "Netzwerk-Skript ausgefuehrt.",
     },
-    "fr": {
+    Language.FR.value: {
         "title": "Gestionnaire Waydroid",
         "lang_label": "Langue :",
         "tab_display": "Affichage & Fenetre",
@@ -311,7 +367,7 @@ TRANSLATIONS = {
         "msg_gboard_done": "Gboard configure comme clavier par defaut.",
         "msg_net_fixed": "Script reseau execute.",
     },
-    "it": {
+    Language.IT.value: {
         "title": "Gestore Impostazioni Waydroid",
         "lang_label": "Lingua:",
         "tab_display": "Schermo e Finestra",
@@ -353,65 +409,64 @@ TRANSLATIONS = {
     }
 }
 
-LANGUAGE_NAMES = [
-    ("en", "English"),
-    ("ko", "한국어 (Korean)"),
-    ("ja", "日本語 (Japanese)"),
-    ("zh", "中文 (Chinese)"),
-    ("es", "Español (Spanish)"),
-    ("de", "Deutsch (German)"),
-    ("fr", "Français (French)"),
-    ("it", "Italiano (Italian)"),
+LANGUAGE_NAMES: Final[List[Tuple[str, str]]] = [
+    (Language.EN.value, "English"),
+    (Language.KO.value, "한국어 (Korean)"),
+    (Language.JA.value, "日本語 (Japanese)"),
+    (Language.ZH.value, "中文 (Chinese)"),
+    (Language.ES.value, "Español (Spanish)"),
+    (Language.DE.value, "Deutsch (German)"),
+    (Language.FR.value, "Français (French)"),
+    (Language.IT.value, "Italiano (Italian)"),
 ]
 
+
 class WaydroidManagerApp(tk.Tk):
-    def __init__(self):
+    """Main GUI Application for Managing Waydroid."""
+
+    def __init__(self) -> None:
         super().__init__()
-        self.config_data = self.load_config()
-        self.current_lang = self.config_data.get("language", "en")
+        self.config: AppConfig = AppConfig.load()
+        self.current_lang: str = self.config.language
         
         self.title("Waydroid Settings Manager")
         self.geometry("640x580")
         self.minsize(580, 520)
         
-        # Configure Fonts (Prioritize Google Noto Sans / Ubuntu TrueType fonts)
-        self.configure_system_fonts()
-        
+        self._init_typography()
+        self._init_styles()
+        self._create_widgets()
+        self.update_language(self.current_lang)
+
+    def _init_typography(self) -> None:
+        """Configure clean anti-aliased system fonts."""
+        available_families = set(tkfont.families())
+        candidates = ["Noto Sans CJK KR", "Noto Sans", "Ubuntu", "DejaVu Sans", "Sans"]
+        chosen = next((c for c in candidates if c in available_families), "DejaVu Sans")
+
+        self.base_font: Tuple[str, int] = (chosen, 10)
+        self.bold_font: Tuple[str, int, str] = (chosen, 10, "bold")
+        self.title_font: Tuple[str, int, str] = (chosen, 11, "bold")
+        self.italic_font: Tuple[str, int, str] = (chosen, 9, "italic")
+
+        for font_name in ["TkDefaultFont", "TkTextFont", "TkMenuFont"]:
+            try:
+                tkfont.nametofont(font_name).configure(family=chosen, size=10)
+            except tk.TclError:
+                pass
+        try:
+            tkfont.nametofont("TkHeadingFont").configure(family=chosen, size=11, weight="bold")
+        except tk.TclError:
+            pass
+
+    def _init_styles(self) -> None:
+        """Configure ttk widget styles."""
         self.style = ttk.Style()
         try:
             self.style.theme_use("clam")
-        except Exception:
-            pass
-            
-        self.configure_styles()
-        self.create_widgets()
-        self.update_language(self.current_lang)
-
-    def configure_system_fonts(self):
-        available_fonts = tkfont.families()
-        chosen_font = "DejaVu Sans"
-        for candidate in ["Noto Sans CJK KR", "Noto Sans", "Ubuntu", "DejaVu Sans", "Sans"]:
-            if candidate in available_fonts:
-                chosen_font = candidate
-                break
-
-        self.base_font = (chosen_font, 10)
-        self.bold_font = (chosen_font, 10, "bold")
-        self.title_font = (chosen_font, 11, "bold")
-        self.italic_font = (chosen_font, 9, "italic")
-
-        # Configure default Tk fonts
-        for name in ["TkDefaultFont", "TkTextFont", "TkMenuFont"]:
-            try:
-                tkfont.nametofont(name).configure(family=chosen_font, size=10)
-            except Exception:
-                pass
-        try:
-            tkfont.nametofont("TkHeadingFont").configure(family=chosen_font, size=11, weight="bold")
-        except Exception:
+        except tk.TclError:
             pass
 
-    def configure_styles(self):
         self.style.configure(".", font=self.base_font)
         self.style.configure("TLabel", font=self.base_font)
         self.style.configure("TButton", font=self.base_font, padding=4)
@@ -420,26 +475,14 @@ class WaydroidManagerApp(tk.Tk):
         self.style.configure("TNotebook.Tab", font=self.base_font, padding=(10, 4))
         self.style.configure("Accent.TButton", font=self.bold_font, foreground="#ffffff", background="#1a73e8")
 
-    def load_config(self):
-        config = DEFAULT_CONFIG.copy()
-        if os.path.exists(CONFIG_PATH):
-            try:
-                with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-                    config.update(json.load(f))
-            except Exception:
-                pass
-        return config
+    def tr(self, key: str) -> str:
+        """Translate a key into the currently active language."""
+        lang_dict = TRANSLATIONS.get(self.current_lang, TRANSLATIONS[Language.EN.value])
+        return lang_dict.get(key, key)
 
-    def save_config(self):
-        os.makedirs(os.path.dirname(CONFIG_PATH), exist_ok=True)
-        with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-            json.dump(self.config_data, f, indent=2)
-
-    def tr(self, key):
-        return TRANSLATIONS.get(self.current_lang, TRANSLATIONS["en"]).get(key, key)
-
-    def create_widgets(self):
-        # Top Bar: Language Selector
+    def _create_widgets(self) -> None:
+        """Construct the main GUI layout."""
+        # Top Language Selector Bar
         top_frame = ttk.Frame(self, padding=(12, 10))
         top_frame.pack(fill="x")
         
@@ -448,38 +491,36 @@ class WaydroidManagerApp(tk.Tk):
         
         self.combo_lang = ttk.Combobox(top_frame, state="readonly", width=22, font=self.base_font)
         self.combo_lang["values"] = [name for _, name in LANGUAGE_NAMES]
-        current_idx = [code for code, _ in LANGUAGE_NAMES].index(self.current_lang) if self.current_lang in [code for code, _ in LANGUAGE_NAMES] else 0
+        
+        lang_codes = [code for code, _ in LANGUAGE_NAMES]
+        current_idx = lang_codes.index(self.current_lang) if self.current_lang in lang_codes else 0
         self.combo_lang.current(current_idx)
-        self.combo_lang.bind("<<ComboboxSelected>>", self.on_language_change)
+        self.combo_lang.bind("<<ComboboxSelected>>", self._on_language_change)
         self.combo_lang.pack(side="left")
         
         self.lbl_status = ttk.Label(top_frame, text="", font=self.italic_font)
         self.lbl_status.pack(side="right", padx=6)
-        self.check_status()
+        self._check_status()
 
-        # Notebook (Tabs)
+        # Tabbed Notebook
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill="both", expand=True, padx=12, pady=(0, 10))
         
-        # Tab 1: Display
         self.tab_display = ttk.Frame(self.notebook, padding=16)
         self.notebook.add(self.tab_display, text=self.tr("tab_display"))
-        self.setup_display_tab()
+        self._setup_display_tab()
         
-        # Tab 2: Keyboard & Input
         self.tab_input = ttk.Frame(self.notebook, padding=16)
         self.notebook.add(self.tab_input, text=self.tr("tab_input"))
-        self.setup_input_tab()
+        self._setup_input_tab()
         
-        # Tab 3: Storage & Sharing
         self.tab_storage = ttk.Frame(self.notebook, padding=16)
         self.notebook.add(self.tab_storage, text=self.tr("tab_storage"))
-        self.setup_storage_tab()
+        self._setup_storage_tab()
         
-        # Tab 4: Network & Tools
         self.tab_network = ttk.Frame(self.notebook, padding=16)
         self.notebook.add(self.tab_network, text=self.tr("tab_network"))
-        self.setup_network_tab()
+        self._setup_network_tab()
 
         # Bottom Action Bar
         bottom_frame = ttk.Frame(self, padding=(12, 10))
@@ -491,25 +532,40 @@ class WaydroidManagerApp(tk.Tk):
         self.btn_launch = ttk.Button(bottom_frame, text=self.tr("btn_launch"), command=self.launch_waydroid)
         self.btn_launch.pack(side="right", padx=5)
 
-    def setup_display_tab(self):
+    def _setup_display_tab(self) -> None:
         self.lbl_presets = ttk.Label(self.tab_display, text=self.tr("window_presets"), font=self.bold_font)
         self.lbl_presets.pack(anchor="w", pady=(0, 8))
         
-        self.mode_var = tk.StringVar(value=self.config_data.get("mode", "tablet_portrait"))
+        self.mode_var = tk.StringVar(value=self.config.mode)
         
-        self.rb_phone = ttk.Radiobutton(self.tab_display, text=self.tr("preset_phone"), value="phone", variable=self.mode_var, command=self.on_mode_change)
+        self.rb_phone = ttk.Radiobutton(
+            self.tab_display, text=self.tr("preset_phone"),
+            value=WindowMode.PHONE.value, variable=self.mode_var, command=self._on_mode_change
+        )
         self.rb_phone.pack(anchor="w", pady=3)
         
-        self.rb_tablet_p = ttk.Radiobutton(self.tab_display, text=self.tr("preset_tablet_p"), value="tablet_portrait", variable=self.mode_var, command=self.on_mode_change)
+        self.rb_tablet_p = ttk.Radiobutton(
+            self.tab_display, text=self.tr("preset_tablet_p"),
+            value=WindowMode.TABLET_PORTRAIT.value, variable=self.mode_var, command=self._on_mode_change
+        )
         self.rb_tablet_p.pack(anchor="w", pady=3)
         
-        self.rb_tablet_l = ttk.Radiobutton(self.tab_display, text=self.tr("preset_tablet_l"), value="tablet_landscape", variable=self.mode_var, command=self.on_mode_change)
+        self.rb_tablet_l = ttk.Radiobutton(
+            self.tab_display, text=self.tr("preset_tablet_l"),
+            value=WindowMode.TABLET_LANDSCAPE.value, variable=self.mode_var, command=self._on_mode_change
+        )
         self.rb_tablet_l.pack(anchor="w", pady=3)
         
-        self.rb_full = ttk.Radiobutton(self.tab_display, text=self.tr("preset_fullscreen"), value="fullscreen", variable=self.mode_var, command=self.on_mode_change)
+        self.rb_full = ttk.Radiobutton(
+            self.tab_display, text=self.tr("preset_fullscreen"),
+            value=WindowMode.FULLSCREEN.value, variable=self.mode_var, command=self._on_mode_change
+        )
         self.rb_full.pack(anchor="w", pady=3)
         
-        self.rb_custom = ttk.Radiobutton(self.tab_display, text=self.tr("preset_custom"), value="custom", variable=self.mode_var, command=self.on_mode_change)
+        self.rb_custom = ttk.Radiobutton(
+            self.tab_display, text=self.tr("preset_custom"),
+            value=WindowMode.CUSTOM.value, variable=self.mode_var, command=self._on_mode_change
+        )
         self.rb_custom.pack(anchor="w", pady=3)
         
         # Custom Resolution inputs
@@ -519,22 +575,22 @@ class WaydroidManagerApp(tk.Tk):
         self.lbl_w = ttk.Label(self.custom_frame, text=self.tr("width_label"))
         self.lbl_w.grid(row=0, column=0, padx=5, pady=4, sticky="w")
         self.ent_w = ttk.Entry(self.custom_frame, width=8, font=self.base_font)
-        self.ent_w.insert(0, str(self.config_data.get("custom_width", 1080)))
+        self.ent_w.insert(0, str(self.config.custom_width))
         self.ent_w.grid(row=0, column=1, padx=5, pady=4)
         
         self.lbl_h = ttk.Label(self.custom_frame, text=self.tr("height_label"))
         self.lbl_h.grid(row=0, column=2, padx=5, pady=4, sticky="w")
         self.ent_h = ttk.Entry(self.custom_frame, width=8, font=self.base_font)
-        self.ent_h.insert(0, str(self.config_data.get("custom_height", 1920)))
+        self.ent_h.insert(0, str(self.config.custom_height))
         self.ent_h.grid(row=0, column=3, padx=5, pady=4)
         
         self.lbl_dpi = ttk.Label(self.custom_frame, text=self.tr("dpi_label"))
         self.lbl_dpi.grid(row=0, column=4, padx=5, pady=4, sticky="w")
         self.ent_dpi = ttk.Entry(self.custom_frame, width=6, font=self.base_font)
-        self.ent_dpi.insert(0, str(self.config_data.get("dpi", 280)))
+        self.ent_dpi.insert(0, str(self.config.dpi))
         self.ent_dpi.grid(row=0, column=5, padx=5, pady=4)
 
-    def setup_input_tab(self):
+    def _setup_input_tab(self) -> None:
         self.lbl_gboard_sec = ttk.Label(self.tab_input, text=self.tr("gboard_section"), font=self.bold_font)
         self.lbl_gboard_sec.pack(anchor="w", pady=(0, 6))
         
@@ -550,23 +606,22 @@ class WaydroidManagerApp(tk.Tk):
         self.lbl_tip = ttk.Label(self.tab_input, text=self.tr("shortcut_tip"), foreground="#1a73e8", wraplength=560, font=self.italic_font)
         self.lbl_tip.pack(anchor="w", pady=(16, 0))
 
-    def setup_storage_tab(self):
+    def _setup_storage_tab(self) -> None:
         self.lbl_storage_sec = ttk.Label(self.tab_storage, text=self.tr("storage_section"), font=self.bold_font)
         self.lbl_storage_sec.pack(anchor="w", pady=(0, 4))
         
         self.lbl_storage_desc = ttk.Label(self.tab_storage, text=self.tr("storage_desc"), wraplength=560)
         self.lbl_storage_desc.pack(anchor="w", pady=(0, 10))
         
-        self.share_var = tk.BooleanVar(value=self.config_data.get("share_downloads", True))
+        self.share_var = tk.BooleanVar(value=self.config.share_downloads)
         self.cb_share = ttk.Checkbutton(
             self.tab_storage,
             text=self.tr("share_downloads_label"),
             variable=self.share_var,
-            command=self.on_share_toggle
+            command=self._on_share_toggle
         )
         self.cb_share.pack(anchor="w", pady=6)
         
-        # Folder Path Selector Frame
         self.folder_frame = ttk.LabelFrame(self.tab_storage, text="Shared Folder Location", padding=10)
         self.folder_frame.pack(fill="x", pady=8)
         
@@ -577,8 +632,7 @@ class WaydroidManagerApp(tk.Tk):
         path_row.pack(fill="x", pady=2)
         
         self.ent_folder = ttk.Entry(path_row, font=self.base_font)
-        current_path = self.config_data.get("shared_folder_path", os.path.expanduser("~/Downloads"))
-        self.ent_folder.insert(0, current_path)
+        self.ent_folder.insert(0, self.config.shared_folder_path)
         self.ent_folder.pack(side="left", fill="x", expand=True, padx=(0, 6))
         
         self.btn_browse = ttk.Button(path_row, text=self.tr("btn_browse"), command=self.browse_folder)
@@ -587,7 +641,7 @@ class WaydroidManagerApp(tk.Tk):
         self.btn_open_dl = ttk.Button(self.tab_storage, text=self.tr("btn_open_downloads"), command=self.open_downloads)
         self.btn_open_dl.pack(anchor="w", pady=10)
 
-    def setup_network_tab(self):
+    def _setup_network_tab(self) -> None:
         self.lbl_net_sec = ttk.Label(self.tab_network, text=self.tr("network_section"), font=self.bold_font)
         self.lbl_net_sec.pack(anchor="w", pady=(0, 8))
         
@@ -597,20 +651,21 @@ class WaydroidManagerApp(tk.Tk):
         self.btn_apk = ttk.Button(self.tab_network, text=self.tr("btn_install_apk"), command=self.install_apk)
         self.btn_apk.pack(anchor="w", pady=4)
 
-    def on_language_change(self, event=None):
+    def _on_language_change(self, _event: Optional[tk.Event] = None) -> None:
         selected_idx = self.combo_lang.current()
-        if selected_idx >= 0 and selected_idx < len(LANGUAGE_NAMES):
+        if 0 <= selected_idx < len(LANGUAGE_NAMES):
             self.current_lang = LANGUAGE_NAMES[selected_idx][0]
-            self.config_data["language"] = self.current_lang
-            self.save_config()
+            self.config.language = self.current_lang
+            self.config.save()
             self.update_language(self.current_lang)
 
-    def update_language(self, lang_code):
+    def update_language(self, lang_code: str) -> None:
+        """Update all UI text labels dynamically."""
         self.current_lang = lang_code
         self.title(self.tr("title"))
         self.lbl_lang.config(text=self.tr("lang_label"))
         
-        # Update Notebook tab names
+        # Tabs
         self.notebook.tab(0, text=self.tr("tab_display"))
         self.notebook.tab(1, text=self.tr("tab_input"))
         self.notebook.tab(2, text=self.tr("tab_storage"))
@@ -650,112 +705,118 @@ class WaydroidManagerApp(tk.Tk):
         # Bottom
         self.btn_stop.config(text=self.tr("btn_stop_session"))
         self.btn_launch.config(text=self.tr("btn_launch"))
-        self.check_status()
+        self._check_status()
 
-    def on_mode_change(self):
+    def _on_mode_change(self) -> None:
         mode = self.mode_var.get()
-        self.config_data["mode"] = mode
-        if mode == "phone":
-            self.config_data["width"] = 600
-            self.config_data["height"] = 1024
-        elif mode == "tablet_portrait":
-            self.config_data["width"] = 800
-            self.config_data["height"] = 1200
-        elif mode == "tablet_landscape":
-            self.config_data["width"] = 1200
-            self.config_data["height"] = 800
-        elif mode == "fullscreen":
-            self.config_data["width"] = 0
-            self.config_data["height"] = 0
-        elif mode == "custom":
+        self.config.mode = mode
+        if mode == WindowMode.PHONE.value:
+            self.config.width, self.config.height = 600, 1024
+        elif mode == WindowMode.TABLET_PORTRAIT.value:
+            self.config.width, self.config.height = 800, 1200
+        elif mode == WindowMode.TABLET_LANDSCAPE.value:
+            self.config.width, self.config.height = 1200, 800
+        elif mode == WindowMode.FULLSCREEN.value:
+            self.config.width, self.config.height = 0, 0
+        elif mode == WindowMode.CUSTOM.value:
             try:
-                self.config_data["width"] = int(self.ent_w.get())
-                self.config_data["height"] = int(self.ent_h.get())
-                self.config_data["dpi"] = int(self.ent_dpi.get())
+                self.config.width = int(self.ent_w.get())
+                self.config.height = int(self.ent_h.get())
+                self.config.dpi = int(self.ent_dpi.get())
+                self.config.custom_width = self.config.width
+                self.config.custom_height = self.config.height
             except ValueError:
                 pass
-        self.save_config()
+        self.config.save()
 
-    def on_share_toggle(self):
-        self.config_data["share_downloads"] = self.share_var.get()
-        self.config_data["shared_folder_path"] = self.ent_folder.get().strip()
-        self.save_config()
+    def _on_share_toggle(self) -> None:
+        self.config.share_downloads = self.share_var.get()
+        self.config.shared_folder_path = self.ent_folder.get().strip()
+        self.config.save()
 
-    def browse_folder(self):
+    def browse_folder(self) -> None:
+        """Open directory chooser dialog."""
         folder = filedialog.askdirectory(title="Select Folder to Share with Android")
         if folder:
             self.ent_folder.delete(0, tk.END)
             self.ent_folder.insert(0, folder)
-            self.config_data["shared_folder_path"] = folder
-            self.save_config()
+            self.config.shared_folder_path = folder
+            self.config.save()
 
-    def check_status(self):
+    def _check_status(self) -> None:
+        """Query Waydroid daemon status and update UI badge."""
         try:
-            out = subprocess.check_output(["waydroid", "status"], text=True, stderr=subprocess.DEVNULL)
-            if "Session:\tRUNNING" in out or "Session: RUNNING" in out:
+            proc = subprocess.run(
+                ["waydroid", "status"],
+                capture_output=True, text=True, check=False
+            )
+            if "Session:\tRUNNING" in proc.stdout or "Session: RUNNING" in proc.stdout:
                 self.lbl_status.config(text=self.tr("status_running"), foreground="#2e7d32")
             else:
                 self.lbl_status.config(text=self.tr("status_stopped"), foreground="#757575")
-        except Exception:
+        except OSError:
             self.lbl_status.config(text=self.tr("status_stopped"), foreground="#757575")
 
-    def enable_gboard(self):
+    def enable_gboard(self) -> None:
+        """Enable Gboard as default IME via waydroid shell."""
         try:
-            subprocess.run([
-                "waydroid", "shell", "ime", "enable",
-                "com.google.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME"
-            ], check=False)
-            subprocess.run([
-                "waydroid", "shell", "ime", "set",
-                "com.google.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME"
-            ], check=False)
+            ime_id = "com.google.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME"
+            subprocess.run(["waydroid", "shell", "ime", "enable", ime_id], check=False)
+            subprocess.run(["waydroid", "shell", "ime", "set", ime_id], check=False)
             messagebox.showinfo("Waydroid", self.tr("msg_gboard_done"))
-        except Exception as e:
-            messagebox.showerror("Error", str(e))
+        except OSError as err:
+            messagebox.showerror("Error", str(err))
 
-    def open_ime_settings(self):
+    def open_ime_settings(self) -> None:
+        """Open Android Language & Input settings."""
         try:
             subprocess.Popen(["waydroid", "shell", "am", "start", "-a", "android.settings.INPUT_METHOD_SETTINGS"])
-        except Exception as e:
-            messagebox.showerror("Error", str(e))
+        except OSError as err:
+            messagebox.showerror("Error", str(err))
 
-    def open_downloads(self):
-        target_path = self.ent_folder.get().strip() or os.path.expanduser("~/Downloads")
-        if os.path.exists(target_path):
-            subprocess.Popen(["xdg-open", target_path])
+    def open_downloads(self) -> None:
+        """Open shared folder in native file manager."""
+        target_path = Path(self.ent_folder.get().strip() or DEFAULT_SHARED_DIR)
+        if target_path.exists():
+            subprocess.Popen(["xdg-open", str(target_path)])
 
-    def fix_network(self):
-        script = os.path.join(SCRIPT_DIR, "diagnose_and_fix_network.sh")
-        if os.path.exists(script):
+    def fix_network(self) -> None:
+        """Run network diagnostics and firewall repair script."""
+        script = SCRIPT_DIR / "diagnose_and_fix_network.sh"
+        if script.is_file():
             subprocess.Popen(["x-terminal-emulator", "-e", f"bash {script}"])
             messagebox.showinfo("Waydroid", self.tr("msg_net_fixed"))
 
-    def install_apk(self):
+    def install_apk(self) -> None:
+        """Open file dialog to install an APK."""
         file_path = filedialog.askopenfilename(
             title="Select APK File",
             filetypes=[("Android Package", "*.apk"), ("All Files", "*.*")]
         )
         if file_path:
-            installer = os.path.join(SCRIPT_DIR, "install_apk.sh")
+            installer = SCRIPT_DIR / "install_apk.sh"
             try:
-                res = subprocess.run([installer, file_path], capture_output=True, text=True)
+                res = subprocess.run([str(installer), file_path], capture_output=True, text=True, check=False)
                 if res.returncode == 0:
                     messagebox.showinfo("Waydroid", self.tr("msg_apk_success"))
                 else:
                     messagebox.showerror("Waydroid", f"{self.tr('msg_apk_fail')}\n{res.stderr or res.stdout}")
-            except Exception as e:
-                messagebox.showerror("Error", str(e))
+            except OSError as err:
+                messagebox.showerror("Error", str(err))
 
-    def stop_waydroid(self):
+    def stop_waydroid(self) -> None:
+        """Stop Waydroid session."""
         subprocess.run(["waydroid", "session", "stop"], check=False)
-        self.check_status()
+        self._check_status()
 
-    def launch_waydroid(self):
-        self.on_mode_change()
-        self.on_share_toggle()
-        runner = os.path.join(SCRIPT_DIR, "run_waydroid.sh")
-        subprocess.Popen([runner])
-        self.after(3000, self.check_status)
+    def launch_waydroid(self) -> None:
+        """Apply current configuration and start Waydroid."""
+        self._on_mode_change()
+        self._on_share_toggle()
+        runner = SCRIPT_DIR / "run_waydroid.sh"
+        subprocess.Popen([str(runner)])
+        self.after(3000, self._check_status)
+
 
 if __name__ == "__main__":
     app = WaydroidManagerApp()
