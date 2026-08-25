@@ -9,29 +9,29 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 echo "=========================================================="
-echo " 🚀 Waydroid & Android eBook 환경 자동 설치를 시작합니다"
+echo " Starting the Waydroid environment automatic installation"
 echo "=========================================================="
 
 # 1. 필수 시스템 패키지 설치
 echo ""
-echo "📦 [1/7] 필수 패키지, GUI 라이브러리 및 Weston 설치 중..."
+echo " [1/7] Installing essential packages, GUI libraries, and Weston..."
 sudo apt update
 sudo apt install -y curl ca-certificates lxc weston python3 python3-venv python3-tk git iptables
 
 # 2. Waydroid 공식 저장소 추가 및 설치
 echo ""
-echo "📦 [2/7] Waydroid 설치 확인 및 진행 중..."
+echo " [2/7] Waydroid installation verification and in progress..."
 if ! command -v waydroid &> /dev/null; then
     curl -s https://repo.waydro.id | sudo bash
     sudo apt update
     sudo apt install -y waydroid
 else
-    echo "  -> Waydroid가 이미 설치되어 있습니다."
+    echo "  -> Waydroid is already installed."
 fi
 
 # 3. 네트워크 및 UFW 방화벽 자동 설정
 echo ""
-echo "🌐 [3/7] 네트워크 포워딩 및 방화벽(UFW) 자동 구성 중..."
+echo " [3/7] Configuring Network Forwarding and Firewall (UFW) automatically..."
 if [ -f /etc/default/ufw ]; then
     sudo sed -i 's/DEFAULT_FORWARD_POLICY="DROP"/DEFAULT_FORWARD_POLICY="ACCEPT"/g' /etc/default/ufw
 fi
@@ -45,26 +45,26 @@ sudo sysctl -w net.ipv4.ip_forward=1 > /dev/null
 
 # 4. Waydroid 이미지 초기화 및 컨테이너 시작
 echo ""
-echo "⚙️ [4/7] Waydroid 이미지 초기화 및 서비스 시작 중..."
+echo " [4/7] Initializing Waydroid image and starting service..."
 if [ ! -d "/var/lib/waydroid/images" ] || [ ! -f "/var/lib/waydroid/images/system.img" ]; then
-    echo "  -> Waydroid 순정 이미지(VANILLA) 다운로드 및 초기화 중 (시간이 다소 소요될 수 있습니다)..."
+    echo "  -> Downloading Waydroid stock image (VANILLA) and resetting (this may take some time)..."
     sudo waydroid init -s VANILLA
 else
-    echo "  -> 이미 초기화된 Waydroid 이미지가 존재합니다."
+    echo "  -> An initialized Waydroid image already exists."
 fi
 
 sudo systemctl enable --now waydroid-container
 
 # 5. DNS 및 가상 WiFi 속성 등록
 echo ""
-echo "🔧 [5/7] Fake Wi-Fi 및 Google DNS 설정 중..."
+echo " [5/7] Setting up Fake Wi-Fi and Google DNS..."
 waydroid prop set persist.waydroid.fake_wifi "*" 2>/dev/null || true
 waydroid prop set persist.waydroid.dns 8.8.8.8 2>/dev/null || true
 waydroid prop set persist.waydroid.dns2 1.1.1.1 2>/dev/null || true
 
 # 6. ARM 번역 레이어 (libndk / libhoudini) + Widevine DRM 자동 설치
 echo ""
-echo "🧠 [6/7] CPU 아키텍처에 맞는 ARM Translation 레이어 설치 중..."
+echo " [6/7] Installing ARM Translation layer compatible with CPU architecture..."
 if [ ! -d "${SCRIPT_DIR}/waydroid_script" ]; then
     git clone https://github.com/casualsnek/waydroid_script "${SCRIPT_DIR}/waydroid_script"
 fi
@@ -78,17 +78,17 @@ fi
 # CPU 판별 (AMD: libndk, Intel: libhoudini or libndk)
 CPU_VENDOR="$(grep -m1 "vendor_id" /proc/cpuinfo | awk '{print $3}')"
 if [[ "$CPU_VENDOR" =~ "AuthenticAMD" ]]; then
-    echo "  -> AMD CPU 감지됨: libndk 및 widevine 설치"
+    echo "  -> AMD CPU Detected: Install libndk and widevine"
     sudo "${SCRIPT_DIR}/waydroid_script/venv/bin/python3" "${SCRIPT_DIR}/waydroid_script/main.py" install libndk widevine
 else
-    echo "  -> Intel/기타 CPU 감지됨: libhoudini 및 widevine 설치"
+    echo "  -> Intel/Other CPUs Detected: Install libhoudini and widevine"
     sudo "${SCRIPT_DIR}/waydroid_script/venv/bin/python3" "${SCRIPT_DIR}/waydroid_script/main.py" install libhoudini widevine || \
     sudo "${SCRIPT_DIR}/waydroid_script/venv/bin/python3" "${SCRIPT_DIR}/waydroid_script/main.py" install libndk widevine
 fi
 
 # 7. Aurora Store 최신 APK 다운로드 및 바로가기 생성
 echo ""
-echo "🎨 [7/7] Aurora Store 다운로드 및 바탕화면 바로가기 등록 중..."
+echo " [7/7] Downloading Aurora Store and adding desktop shortcut.."
 if [ ! -f "${SCRIPT_DIR}/AuroraStore.apk" ]; then
     curl -sL "https://auroraoss.com/downloads/AuroraStore/Release/preload/AuroraStore-preload-4.7.5.apk" -o "${SCRIPT_DIR}/AuroraStore.apk" || true
 fi
@@ -102,9 +102,9 @@ chmod +x "${SCRIPT_DIR}/uninstall.sh"
 
 echo ""
 echo "=========================================================="
-echo " 🎉 모든 설치 및 최적화가 완료되었습니다!"
+echo " All installation and optimization are complete!"
 echo "=========================================================="
-echo "1. [Waydroid Settings Manager] 바로가기로 해상도 및 키보드를 간편하게 설정할 수 있습니다."
-echo "2. [Waydroid (Android)] 바로가기로 안드로이드 환경을 바로 실행할 수 있습니다."
-echo "3. Aurora Store에서 원하는 앱 및 Gboard를 설치하시면 됩니다."
+echo "1. [Waydroid Settings Manager] You can easily set the resolution and keyboard using shortcuts."
+echo "2. [Waydroid (Android)] You can launch the Android environment directly via a shortcut."
+echo "3. You can install the apps and Gboard you want from the Aurora Store."
 echo "=========================================================="
