@@ -60,9 +60,16 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Apply Waydroid screen properties
-if [ "$FULLSCREEN" = "false" ]; then
-    waydroid prop set persist.waydroid.width "$WIDTH" 2>/dev/null || true
-    waydroid prop set persist.waydroid.height "$HEIGHT" 2>/dev/null || true
+# Auto-clamp height to screen height on X11 if requested height exceeds usable screen space
+if [ "$FULLSCREEN" = "false" ] && [ "$XDG_SESSION_TYPE" != "wayland" ] && command -v xrandr &>/dev/null; then
+    MAX_H=$(xrandr --current 2>/dev/null | grep '\*' | awk '{print $1}' | cut -d'x' -f2 | head -n1 || true)
+    if [ -n "$MAX_H" ] && [ "$MAX_H" -gt 0 ]; then
+        MAX_USABLE_H=$(( MAX_H - 60 ))
+        if [ "$HEIGHT" -gt "$MAX_USABLE_H" ]; then
+            echo "[Info] 화면 높이(${MAX_H}px)에 맞게 높이를 ${MAX_USABLE_H}px로 자동 조정합니다."
+            HEIGHT="$MAX_USABLE_H"
+        fi
+    fi
 fi
 
 # 1. Wayland 환경
@@ -70,6 +77,10 @@ if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
     echo "[Info] Wayland 세션 감지됨. 직접 실행합니다."
     waydroid session start &
     sleep 2
+    if [ "$FULLSCREEN" = "false" ]; then
+        waydroid prop set persist.waydroid.width "$WIDTH" 2>/dev/null || true
+        waydroid prop set persist.waydroid.height "$HEIGHT" 2>/dev/null || true
+    fi
     waydroid show-full-ui
     exit 0
 fi
@@ -84,23 +95,45 @@ fi
 # 기존 세션 정리
 waydroid session stop 2>/dev/null || true
 
-# Weston 실행
+# 전용 Wayland 소켓 지정 및 기존 잔여 소켓 제거
+WAYLAND_SOCKET="wayland-waydroid"
+rm -f "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/${WAYLAND_SOCKET}"*
+export WAYLAND_DISPLAY="${WAYLAND_SOCKET}"
+
+# Weston 실행 (X11 백엔드 명시)
 if [ "$FULLSCREEN" = "true" ]; then
-    weston --fullscreen --shell=kiosk-shell.so 2>/dev/null || weston --fullscreen &
+    weston -B x11-backend.so --socket="${WAYLAND_SOCKET}" --fullscreen --shell=kiosk-shell.so &
 else
-    weston --width="$WIDTH" --height="$HEIGHT" --shell=kiosk-shell.so 2>/dev/null || weston --width="$WIDTH" --height="$HEIGHT" &
+    weston -B x11-backend.so --socket="${WAYLAND_SOCKET}" --width="$WIDTH" --height="$HEIGHT" --shell=kiosk-shell.so &
 fi
 WESTON_PID=$!
 
 # Wayland 소켓 생성 대기
-sleep 2
-
-# 소켓 탐색
-export WAYLAND_DISPLAY="$(ls -t "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"/wayland-* 2>/dev/null | head -n1 | xargs -n1 basename 2>/dev/null || echo "wayland-1")"
+for i in $(seq 1 10); do
+    if [ -S "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/${WAYLAND_SOCKET}" ]; then
+        break
+    fi
+    sleep 0.5
+done
 echo "[Info] 연결 소켓: ${WAYLAND_DISPLAY}"
 
-# Waydroid 세션 및 UI 구동
+# Waydroid 세션 구동
 waydroid session start &
+
+# 백그라운드에서 세션 활성화 감지 후 해상도 프로퍼티 동기화
+if [ "$FULLSCREEN" = "false" ]; then
+    (
+        for i in $(seq 1 30); do
+            if waydroid status 2>/dev/null | grep -q "Session:\s*RUNNING"; then
+                waydroid prop set persist.waydroid.width "$WIDTH" 2>/dev/null || true
+                waydroid prop set persist.waydroid.height "$HEIGHT" 2>/dev/null || true
+                break
+            fi
+            sleep 1
+        done
+    ) &
+fi
+
 sleep 2
 waydroid show-full-ui &
 

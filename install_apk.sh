@@ -9,7 +9,11 @@ if [ ! -f "$APK_PATH" ]; then
     exit 1
 fi
 
-SOCKET="$(ls -t "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"/wayland-* 2>/dev/null | head -n1 | xargs -n1 basename 2>/dev/null || echo "wayland-0")"
+if [ -S "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/wayland-waydroid" ]; then
+    SOCKET="wayland-waydroid"
+else
+    SOCKET="$(find "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}" -maxdepth 1 -name "wayland-*" -type s 2>/dev/null | head -n1 | xargs -n1 basename 2>/dev/null || echo "wayland-0")"
+fi
 export WAYLAND_DISPLAY="$SOCKET"
 
 echo "Waydroid 세션 확인 중..."
